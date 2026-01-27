@@ -4,9 +4,9 @@ services:
     container_name: concert-calendar
     ports:
       - "3000:3000"
-    env_file:
-      - .env.local
-      - .env
+    # env_file:
+    #   - .env.local
+    #   - .env
     volumes:
       - ./data:/app/data
     restart: unless-stopped
