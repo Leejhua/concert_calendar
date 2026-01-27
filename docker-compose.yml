@@ -2,8 +2,12 @@ services:
   concert-calendar:
     build: .
     container_name: concert-calendar
+    # Let Docker assign a random available host port to avoid conflicts
+    # The platform (Flashflock) should automatically detect the exposed port or handle routing
     ports:
-      - "8081:3000"
+      - "3000"
+    expose:
+      - "3000"
     # env_file:
     #   - .env.local
     #   - .env
