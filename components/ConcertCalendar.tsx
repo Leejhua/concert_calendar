@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar, Views, View, EventProps } from 'react-big-calendar';
 import { localizer } from '@/lib/calendar-utils';
-import { Concert } from '@/scripts/sync_data';
+import { Concert } from '@/lib/damai-crawler';
 import { CalendarToolbar } from './CalendarToolbar';
 import { DynamicCalendarView } from './DynamicCalendarView';
 import { CalendarEventCard } from './CalendarEventCard';
