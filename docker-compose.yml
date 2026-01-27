@@ -10,3 +10,12 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    networks:
+      - concert_net
+
+networks:
+  concert_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
