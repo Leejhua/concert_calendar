@@ -383,6 +383,8 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         for (const [index, city] of citiesToFetch.entries()) {
             console.log(`\n[${index + 1}/${citiesToFetch.length}] Fetching ${city.cityName}...`);
             
+            const fetchedIdsInThisCity = new Set<string>();
+
             // Fetch all pages until no more items
             for (let page = 1; page <= 50; page++) { // Safety cap at 50 pages per city
                 // Sleep a bit to avoid rate limiting
@@ -434,8 +436,20 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
                             break;
                         }
 
-                        allConcerts.push(...items);
-                        
+                        let newItemsCount = 0;
+                        for (const item of items) {
+                            if (!fetchedIdsInThisCity.has(item.id)) {
+                                fetchedIdsInThisCity.add(item.id);
+                                allConcerts.push(item);
+                                newItemsCount++;
+                            }
+                        }
+
+                        if (newItemsCount === 0) {
+                            console.log(`   Page ${page}: No new items (Duplicate page). Stopping.`);
+                            break;
+                        }
+
                         // If less than full page, stop fetching this city
                         if (items.length < 20) break; 
                     } else {
