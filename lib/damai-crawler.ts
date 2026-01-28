@@ -38,12 +38,50 @@ const BLACKLIST_KEYWORDS = ['烛光', '致敬', '模仿', '重现', '同人', '�
 // If showTag contains these, we will ignore it and let AI extract the real artist.
 const INVALID_ARTIST_TAGS = ['演唱会', '榜', '热销', '上新', '优选', '折扣', '推荐', '必看', '演出', '麦'];
 
+// Cities to exclude (Overseas + Taiwan)
+// Keeping ONLY Mainland China + Hong Kong + Macau
+const CITY_BLACKLIST = [
+    // Taiwan
+    '台北', '高雄', '桃园', '台中', '台南', '新北', '台湾',
+    // Asia - Japan
+    '东京', '大阪', '名古屋', '福冈', '横滨', '神户', '札幌', '埼玉',
+    // Asia - SE
+    '曼谷', '清迈', '普吉',
+    '新加坡',
+    '吉隆坡', '槟城', '新山',
+    '雅加达', '巴厘岛',
+    '河内', '胡志明', '胡志明市',
+    '马尼拉',
+    '金边',
+    // Asia - KR
+    '首尔', '仁川', '釜山',
+    // Oceania
+    '悉尼', '墨尔本', '布里斯班', '珀斯', '阿德莱德', '堪培拉',
+    '奥克兰', '惠灵顿',
+    // Europe
+    '伦敦', '曼彻斯特', '爱丁堡', '伯明翰',
+    '巴黎',
+    '柏林', '慕尼黑', '法兰克福', '汉堡',
+    '米兰', '罗马',
+    '马德里', '巴塞罗那',
+    '阿姆斯特丹',
+    '莫斯科', '圣彼得堡',
+    '捷克', '布拉格',
+    '瑞典', '斯德哥尔摩',
+    // North America
+    '纽约', '洛杉矶', '旧金山', '拉斯维加斯', '芝加哥', '波士顿', '华盛顿', '西雅图',
+    '多伦多', '温哥华', '蒙特利尔',
+    // Middle East
+    '迪拜', '阿布扎比'
+];
+
 interface DamaiConfig {
     appKey: string;
     tokenWithTime: string;
     cookie: string;
     referer: string;
     deepseekApiKey?: string;
+    onProgress?: (message: string, progress: number) => void;
 }
 
 // Default config (will be overridden)
@@ -52,7 +90,8 @@ let DAMAI_CONFIG: DamaiConfig = {
     tokenWithTime: '',
     cookie: '',
     referer: 'https://m.damai.cn/shows/category.html?categoryId=2394&clicktitle=%E6%BC%94%E5%94%B1%E4%BC%9A',
-    deepseekApiKey: ''
+    deepseekApiKey: '',
+    onProgress: undefined
 };
 
 // --- Helpers ---
@@ -350,6 +389,9 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         DAMAI_CONFIG = { ...DAMAI_CONFIG, ...config };
     }
     
+    const { onProgress } = DAMAI_CONFIG;
+    if (onProgress) onProgress('Starting sync...', 0);
+
     // Validate config
     if (!DAMAI_CONFIG.cookie || !DAMAI_CONFIG.tokenWithTime) {
         console.error('❌ Missing Cookie or Token.');
@@ -371,16 +413,61 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         const hotCities: HotCity[] = cityRes.data?.hotCities || cityRes.data?.hotCity || [];
         console.log(`✅ Found ${hotCities.length} hot cities.`);
 
-        if (hotCities.length === 0) {
+        // Also fetch all other cities from 'groups'
+        let allCities: HotCity[] = [...hotCities];
+        const groups = cityRes.data?.groups;
+        if (Array.isArray(groups)) {
+            console.log(`✅ Found ${groups.length} city groups (A-Z). Parsing...`);
+            groups.forEach((group: any) => {
+                if (Array.isArray(group.sites)) {
+                    group.sites.forEach((site: any) => {
+                        allCities.push({
+                            cityId: site.cityId,
+                            cityName: site.cityName,
+                            url: site.url || ''
+                        });
+                    });
+                }
+            });
+        }
+        
+        // Deduplicate cities by cityId
+        const uniqueCitiesMap = new Map<string, HotCity>();
+        allCities.forEach(c => uniqueCitiesMap.set(c.cityId, c));
+        let uniqueCities = Array.from(uniqueCitiesMap.values());
+
+        // --- Filter Blacklisted Cities ---
+        const beforeFilterCount = uniqueCities.length;
+        uniqueCities = uniqueCities.filter(c => {
+            // Check if city name contains any blacklisted keyword
+            const isBlacklisted = CITY_BLACKLIST.some(b => c.cityName.includes(b));
+            if (isBlacklisted) {
+                // console.log(`   🚫 Skipping city: ${c.cityName}`);
+            }
+            return !isBlacklisted;
+        });
+        const afterFilterCount = uniqueCities.length;
+        
+        console.log(`✅ Total Unique Cities Found: ${beforeFilterCount}`);
+        if (beforeFilterCount > afterFilterCount) {
+             console.log(`🚫 Filtered ${beforeFilterCount - afterFilterCount} overseas/excluded cities.`);
+        }
+        console.log(`✅ Final Cities to Fetch: ${afterFilterCount}`);
+        
+        if (onProgress) onProgress(`Found ${afterFilterCount} cities (Filtered ${beforeFilterCount - afterFilterCount} overseas). Starting crawl...`, 5);
+
+        if (uniqueCities.length === 0) {
             console.error('❌ No cities found. Check Token.');
             return { success: false, totalNew: 0, totalCombined: 0, message: 'Token invalid (No cities found)' };
         }
 
         // 2. Fetch Concerts for each city
         let allConcerts: Concert[] = [];
-        const citiesToFetch = hotCities; // Fetch all hot cities
+        const citiesToFetch = uniqueCities; // Fetch ALL unique cities
 
         for (const [index, city] of citiesToFetch.entries()) {
+            const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85);
+            if (onProgress) onProgress(`Fetching ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
             console.log(`\n[${index + 1}/${citiesToFetch.length}] Fetching ${city.cityName}...`);
             
             const fetchedIdsInThisCity = new Set<string>();
@@ -465,10 +552,12 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
 
         // 3. Deduplicate and Save
         console.log('\n3. Processing Data...');
+        if (onProgress) onProgress('Processing and cleaning data...', 90);
 
         // DeepSeek Extraction
         if (DAMAI_CONFIG.deepseekApiKey) {
             console.log('🤖 DeepSeek API Key found, starting artist extraction...');
+            if (onProgress) onProgress('Enhancing data with AI...', 92);
             allConcerts = await extractArtistsWithDeepSeek(allConcerts, DAMAI_CONFIG.deepseekApiKey);
         } else {
             console.log('ℹ️ No DeepSeek API Key provided, skipping artist extraction.');
@@ -498,8 +587,10 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         console.log(`✅ Total new items fetched: ${allConcerts.length}`);
         console.log(`✅ Total combined items: ${mergedConcerts.length}`);
 
+        if (onProgress) onProgress('Saving data...', 98);
         fs.writeFileSync(DATA_FILE, JSON.stringify(mergedConcerts, null, 2));
         console.log(`🎉 Data saved to ${DATA_FILE}`);
+        if (onProgress) onProgress('Sync complete!', 100);
 
         return {
             success: true,

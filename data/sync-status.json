@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "progress": 100,
+  "total": 0,
+  "current": 0,
+  "message": "Sync completed",
+  "lastUpdated": 1769571956316,
+  "result": {
+    "success": true,
+    "totalNew": 6670,
+    "totalCombined": 390
+  }
+}
