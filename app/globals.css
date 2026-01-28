@@ -201,12 +201,30 @@
   @apply !bg-muted/10;
 }
 
+/* +x more 按钮样式优化 */
+.rbc-show-more {
+  @apply !text-xs !font-medium !text-muted-foreground !bg-muted/50 !px-1.5 !py-0.5 !rounded-md !transition-colors !block !w-full !text-left !mt-1;
+  z-index: 10;
+  position: relative;
+}
+.rbc-show-more:hover {
+  @apply !text-foreground !bg-muted;
+}
+
+/* 确保行内容不过分撑大，给 more 按钮留空间 */
+.rbc-row-segment {
+  padding: 0 2px !important;
+}
+
+/* 强制月份视图的单元格布局 */
+.rbc-month-row {
+  overflow: visible !important; /* 允许弹出层溢出 */
+}
+
 /* "今天"的高亮 */
 .rbc-today {
   @apply !bg-accent/20;
 }
-
-/* 日期数字样式 */
 .rbc-date-cell {
   @apply p-2 text-right font-medium text-muted-foreground text-sm;
 }
