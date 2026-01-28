@@ -10,7 +10,7 @@ interface CalendarEventCardProps {
 
 export const CalendarEventCard = ({ event }: CalendarEventCardProps) => {
   return (
-    <HoverCard>
+    <HoverCard openDelay={100} closeDelay={100}>
       <HoverCardTrigger asChild>
         <div className="cursor-pointer truncate text-xs px-2 py-1 mb-1 rounded-sm bg-background hover:bg-accent transition-colors border border-border/40 shadow-sm border-l-4 border-l-primary text-foreground font-medium w-full max-w-full block">
           {event.title}

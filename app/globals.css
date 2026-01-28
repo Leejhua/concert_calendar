@@ -70,6 +70,20 @@
   }
 }
 
+/* Custom Calendar Styles to enhance off-range days */
+.rbc-month-view .rbc-off-range-bg {
+  background-color: #e2e8f0 !important; /* slate-200 - Darker for visibility */
+}
+
+.rbc-day-bg.rbc-off-range-bg {
+  background-color: #e2e8f0 !important; /* slate-200 */
+}
+
+.dark .rbc-month-view .rbc-off-range-bg,
+.dark .rbc-day-bg.rbc-off-range-bg {
+  background-color: #1e293b !important; /* slate-800 */
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
