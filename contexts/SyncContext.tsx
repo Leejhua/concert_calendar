@@ -20,7 +20,7 @@ export interface SyncStatus {
 
 interface SyncContextType {
   status: SyncStatus;
-  startSync: (curlCommand: string) => Promise<void>;
+  startSync: (curlCommand?: string) => Promise<void>;
   isPolling: boolean;
 }
 
@@ -35,6 +35,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   });
   const [isPolling, setIsPolling] = useState(false);
   const prevStatusRef = useRef<SyncState>('idle');
+  const autoSyncAttempted = useRef(false);
 
   // Polling Logic
   useEffect(() => {
@@ -44,6 +45,21 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch('/api/sync/status');
         const data = await res.json();
+        
+        // Auto-Sync Check (Once per session load)
+        if (!autoSyncAttempted.current && data.lastUpdated > 0) {
+            const ONE_DAY = 24 * 60 * 60 * 1000;
+            // If data is older than 24h and not currently running
+            if (Date.now() - data.lastUpdated > ONE_DAY && data.status !== 'running') {
+                console.log('🔄 Data is stale (>24h), triggering auto-sync...');
+                autoSyncAttempted.current = true;
+                // Trigger auto sync silently
+                startSync(); 
+            } else {
+                // Mark as attempted so we don't check again this session
+                autoSyncAttempted.current = true;
+            }
+        }
         
         // Handle transitions
         if (prevStatusRef.current === 'running' && data.status === 'completed') {
@@ -61,7 +77,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         
         if (prevStatusRef.current === 'running' && data.status === 'error') {
             toast.error("同步失败", {
-                description: data.message,
+                description: data.message + " (请尝试手动同步)",
                 duration: Infinity,
             });
         }
@@ -93,7 +109,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isPolling, status.status]);
 
-  const startSync = async (curlCommand: string) => {
+  const startSync = async (curlCommand?: string) => {
     try {
       const res = await fetch('/api/sync', {
         method: 'POST',
@@ -103,7 +119,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       
       if (res.ok) {
-        setStatus(prev => ({ ...prev, status: 'running', progress: 0, message: 'Starting...' }));
+        setStatus(prev => ({ ...prev, status: 'running', progress: 0, message: curlCommand ? 'Starting manual sync...' : 'Starting auto sync...' }));
         prevStatusRef.current = 'running';
         setIsPolling(true);
       } else {

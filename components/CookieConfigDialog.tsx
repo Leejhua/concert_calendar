@@ -34,6 +34,14 @@ export function CookieConfigDialog() {
     }
   };
 
+  const handleAutoSync = async () => {
+    try {
+      await startSync();
+    } catch (error) {
+      // Error is already toasted by context
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -47,7 +55,8 @@ export function CookieConfigDialog() {
           <DialogDescription>
             {!isSyncing && (
                 <div className="space-y-2 mt-2">
-                  <p>请按照以下步骤获取 cURL 命令：</p>
+                  <p>您可以使用自动同步功能，无需手动输入 cURL 命令。</p>
+                  <p>如果自动同步失败，请尝试手动同步：</p>
                   <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
                     <li>在浏览器 (推荐 Chrome/Edge) 打开 <a href="https://m.damai.cn" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">大麦网 H5 首页 (m.damai.cn)</a></li>
                     <li>按 <code className="bg-muted px-1 rounded">F12</code> 打开开发者工具，切换到 <strong>Network (网络)</strong> 面板</li>
@@ -94,15 +103,20 @@ export function CookieConfigDialog() {
             </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0">
           {isSyncing ? (
              <Button variant="outline" onClick={() => setOpen(false)}>
                 后台运行 (关闭窗口)
              </Button>
           ) : (
-              <Button type="submit" onClick={handleSync}>
-                开始同步
-              </Button>
+              <>
+                  <Button variant="secondary" onClick={handleAutoSync}>
+                    自动同步 (免登录)
+                  </Button>
+                  <Button type="submit" onClick={handleSync}>
+                    手动同步
+                  </Button>
+              </>
           )}
         </DialogFooter>
       </DialogContent>

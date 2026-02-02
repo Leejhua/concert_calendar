@@ -2,6 +2,8 @@ import https from 'https';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { fetchAllMoreTicketsConcerts } from './moretickets-crawler';
+import { mergeConcertLists } from './deduplication';
 
 // --- Type Definitions ---
 export interface Concert {
@@ -96,6 +98,72 @@ let DAMAI_CONFIG: DamaiConfig = {
 
 // --- Helpers ---
 
+async function fetchInitialToken(): Promise<void> {
+    console.log('🔄 Auto-Handshake: Fetching fresh token...');
+    
+    // 1. First, fetch home page to get base cookies (optional but good practice)
+    // In my test, I didn't get cookies from home page, but let's skip it to keep it simple and fast 
+    // since the API call itself returns the token.
+    
+    return new Promise((resolve, reject) => {
+        // We use a light API for handshake
+        const api = 'mtop.damai.wireless.area.groupcity';
+        const t = Date.now();
+        const dataObj = { 
+            platform: "8",
+            comboChannel: "2",
+            dmChannel: "damai@damaih5_h5" 
+        };
+        const dataStr = JSON.stringify(dataObj);
+        // Empty token for first sign
+        const sign = generateSign('', t, DAMAI_CONFIG.appKey, dataStr);
+        
+        const params = new URLSearchParams({
+            jsv: '2.7.5',
+            appKey: DAMAI_CONFIG.appKey,
+            t: String(t),
+            sign: sign,
+            api: api,
+            v: '1.2',
+            type: 'json',
+            dataType: 'json',
+            data: dataStr
+        });
+
+        const options = {
+            hostname: 'mtop.damai.cn',
+            path: `/h5/${api}/1.2/?${params.toString()}`,
+            method: 'GET',
+            headers: {
+                'accept': 'application/json',
+                'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            const setCookie = res.headers['set-cookie'];
+            if (setCookie) {
+                const cookies = setCookie.map(c => c.split(';')[0]).join('; ');
+                const tokenMatch = cookies.match(/_m_h5_tk=([^;]+)/);
+                
+                if (tokenMatch) {
+                    DAMAI_CONFIG.cookie = cookies;
+                    DAMAI_CONFIG.tokenWithTime = tokenMatch[1];
+                    console.log(`✅ Auto-Handshake Success! Token: ${DAMAI_CONFIG.tokenWithTime.split('_')[0]}`);
+                    resolve();
+                } else {
+                    reject(new Error('Handshake failed: No token in Set-Cookie'));
+                }
+            } else {
+                reject(new Error('Handshake failed: No Set-Cookie received'));
+            }
+        });
+
+        req.on('error', (e) => reject(e));
+        req.end();
+    });
+}
+
 function ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -107,9 +175,9 @@ function generateSign(token: string, t: number, appKey: string, dataStr: string)
     return crypto.createHash('md5').update(strToSign).digest('hex');
 }
 
-function makeRequest(api: string, dataObj: any, callbackName?: string): Promise<any> {
+function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0): Promise<any> {
     return new Promise((resolve, reject) => {
-        const token = DAMAI_CONFIG.tokenWithTime.split('_')[0];
+        const token = DAMAI_CONFIG.tokenWithTime ? DAMAI_CONFIG.tokenWithTime.split('_')[0] : '';
         const t = Date.now();
         const dataStr = JSON.stringify(dataObj);
         const sign = generateSign(token, t, DAMAI_CONFIG.appKey, dataStr);
@@ -156,38 +224,73 @@ function makeRequest(api: string, dataObj: any, callbackName?: string): Promise<
         };
 
         const req = https.request(options, (res) => {
+            // Capture and update cookies
+            const setCookie = res.headers['set-cookie'];
+            if (setCookie) {
+                const newCookies = setCookie.map(c => c.split(';')[0]).join('; ');
+                // Check for token update
+                const tokenMatch = newCookies.match(/_m_h5_tk=([^;]+)/);
+                if (tokenMatch) {
+                    DAMAI_CONFIG.tokenWithTime = tokenMatch[1];
+                    // Simple cookie update: overwrite or append. 
+                    // Since we primarily need the token, overwriting or ensuring it's present is key.
+                    // For simplicity and effectiveness, we use the new cookies as they usually contain the necessary session info.
+                    DAMAI_CONFIG.cookie = newCookies; 
+                }
+            }
+
             let chunks: Buffer[] = [];
             res.on('data', (chunk) => chunks.push(chunk));
             res.on('end', () => {
                 const body = Buffer.concat(chunks).toString();
                 
+                let json: any = null;
+
                 if (callbackName && body.includes(callbackName + '(')) {
                     try {
                         const start = body.indexOf(callbackName + '(') + callbackName.length + 1;
                         const end = body.lastIndexOf(')');
                         const jsonStr = body.substring(start, end);
-                        resolve(JSON.parse(jsonStr));
+                        json = JSON.parse(jsonStr);
                     } catch (e: any) {
                         reject(new Error(`Failed to parse JSONP: ${e.message}`));
+                        return;
                     }
                 } else {
                     try {
-                        // Try parsing directly
-                        resolve(JSON.parse(body));
+                        json = JSON.parse(body);
                     } catch (e) {
                         // Fallback: try extracting if it looks like jsonp but failed check
                          if (body.trim().startsWith('mtopjsonp')) {
                              const start = body.indexOf('(') + 1;
                              const end = body.lastIndexOf(')');
                              try {
-                                resolve(JSON.parse(body.substring(start, end)));
-                                return;
+                                json = JSON.parse(body.substring(start, end));
                              } catch(err) {}
                         }
-                        console.error('Raw response parsing failed:', body.substring(0, 200));
-                        reject(new Error('Failed to parse JSON response'));
                     }
                 }
+
+                if (!json) {
+                    console.error('Raw response parsing failed:', body.substring(0, 200));
+                    reject(new Error('Failed to parse JSON response'));
+                    return;
+                }
+
+                // Check for Token Expiry / Empty
+                if (json.ret && json.ret[0] && (json.ret[0].startsWith('FAIL_SYS_TOKEN_EXPIRED') || json.ret[0].startsWith('FAIL_SYS_TOKEN_EMPTY'))) {
+                    if (retryCount < 3) {
+                        console.log(`🔄 Token expired or empty (${json.ret[0]}), retrying... (Attempt ${retryCount + 1})`);
+                        // The response headers should have updated the token already.
+                        // We assume DAMAI_CONFIG is updated by the set-cookie logic above.
+                        resolve(makeRequest(api, dataObj, callbackName, retryCount + 1));
+                        return;
+                    } else {
+                        console.error('❌ Token refresh failed after multiple retries.');
+                    }
+                }
+
+                resolve(json);
             });
         });
 
@@ -392,10 +495,17 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
     const { onProgress } = DAMAI_CONFIG;
     if (onProgress) onProgress('Starting sync...', 0);
 
-    // Validate config
+    // Validate config or Auto-Handshake
     if (!DAMAI_CONFIG.cookie || !DAMAI_CONFIG.tokenWithTime) {
-        console.error('❌ Missing Cookie or Token.');
-        return { success: false, totalNew: 0, totalCombined: 0, message: 'Missing Cookie or Token' };
+        console.log('⚠️ Missing Cookie or Token. Attempting Auto-Handshake...');
+        if (onProgress) onProgress('Auto-authenticating...', 1);
+        
+        try {
+            await fetchInitialToken();
+        } catch (e: any) {
+             console.error('❌ Auto-Handshake Failed:', e);
+             return { success: false, totalNew: 0, totalCombined: 0, message: `Auto-Auth Failed: ${e.message}` };
+        }
     }
 
     ensureDataDir();
@@ -561,6 +671,27 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
             allConcerts = await extractArtistsWithDeepSeek(allConcerts, DAMAI_CONFIG.deepseekApiKey);
         } else {
             console.log('ℹ️ No DeepSeek API Key provided, skipping artist extraction.');
+        }
+
+        // --- MoreTickets Integration ---
+        try {
+            console.log('🎫 Starting MoreTickets Sync...');
+            if (onProgress) onProgress('Fetching from MoreTickets...', 95);
+            
+            let moreTicketsConcerts = await fetchAllMoreTicketsConcerts((msg) => console.log(msg));
+            console.log(`🎫 Fetched ${moreTicketsConcerts.length} items from MoreTickets.`);
+
+            if (DAMAI_CONFIG.deepseekApiKey && moreTicketsConcerts.length > 0) {
+                console.log('🤖 Enhancing MoreTickets data with AI...');
+                moreTicketsConcerts = await extractArtistsWithDeepSeek(moreTicketsConcerts, DAMAI_CONFIG.deepseekApiKey);
+            }
+
+            // Merge MoreTickets into allConcerts (Damai is primary)
+            const combinedFetched = mergeConcertLists(allConcerts, moreTicketsConcerts);
+            console.log(`✅ Combined Fetched: ${combinedFetched.length} (Original Damai: ${allConcerts.length})`);
+            allConcerts = combinedFetched;
+        } catch (mtError) {
+            console.error('❌ MoreTickets Sync Failed (continuing with Damai only):', mtError);
         }
         
         // Load existing data if available to prevent data loss

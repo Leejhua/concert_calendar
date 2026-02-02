@@ -16,42 +16,44 @@ export async function POST(request: Request) {
              return NextResponse.json({ success: false, message: 'Sync already in progress' }, { status: 409 });
         }
 
-        if (!curlCommand) {
-            return NextResponse.json({ success: false, message: 'Missing curlCommand' }, { status: 400 });
-        }
-
-        // 1. Parse Cookie from cURL
         let cookie = '';
-        
-        // Try -b / --cookie
-        const cookieFlagRegex = /(?:-b|--cookie)\s+['"]([^'"]+)['"]/;
-        const cookieFlagMatch = curlCommand.match(cookieFlagRegex);
-        if (cookieFlagMatch) {
-            cookie = cookieFlagMatch[1];
-        }
+        let tokenWithTime = '';
 
-        // If not found, try -H 'cookie: ...'
-        if (!cookie) {
-            const headerCookieRegex = /-H\s+['"]cookie:\s*([^'"]+)['"]/i;
-            const headerMatch = curlCommand.match(headerCookieRegex);
-            if (headerMatch) {
-                cookie = headerMatch[1];
+        if (curlCommand) {
+            // 1. Parse Cookie from cURL
+            
+            // Try -b / --cookie
+            const cookieFlagRegex = /(?:-b|--cookie)\s+['"]([^'"]+)['"]/;
+            const cookieFlagMatch = curlCommand.match(cookieFlagRegex);
+            if (cookieFlagMatch) {
+                cookie = cookieFlagMatch[1];
             }
-        }
 
-        if (!cookie) {
-            return NextResponse.json({ success: false, message: 'Could not extract cookie from cURL command' }, { status: 400 });
-        }
+            // If not found, try -H 'cookie: ...'
+            if (!cookie) {
+                const headerCookieRegex = /-H\s+['"]cookie:\s*([^'"]+)['"]/i;
+                const headerMatch = curlCommand.match(headerCookieRegex);
+                if (headerMatch) {
+                    cookie = headerMatch[1];
+                }
+            }
 
-        // 2. Extract Token (_m_h5_tk) from Cookie
-        const tokenRegex = /_m_h5_tk=([^;]+)/;
-        const tokenMatch = cookie.match(tokenRegex);
-        
-        if (!tokenMatch) {
-            return NextResponse.json({ success: false, message: 'Could not find _m_h5_tk token in cookie' }, { status: 400 });
-        }
+            if (!cookie) {
+                return NextResponse.json({ success: false, message: 'Could not extract cookie from cURL command' }, { status: 400 });
+            }
 
-        const tokenWithTime = tokenMatch[1];
+            // 2. Extract Token (_m_h5_tk) from Cookie
+            const tokenRegex = /_m_h5_tk=([^;]+)/;
+            const tokenMatch = cookie.match(tokenRegex);
+            
+            if (!tokenMatch) {
+                return NextResponse.json({ success: false, message: 'Could not find _m_h5_tk token in cookie' }, { status: 400 });
+            }
+
+            tokenWithTime = tokenMatch[1];
+        } else {
+            console.log('API: No cURL provided, switching to Auto-Handshake Mode');
+        }
 
         // 3. Start Sync (Background)
         updateSyncStatus({
@@ -59,25 +61,30 @@ export async function POST(request: Request) {
             progress: 0,
             total: 0,
             current: 0,
-            message: 'Initializing...',
+            message: curlCommand ? 'Initializing with manual token...' : 'Initializing auto-handshake...',
             result: undefined
         });
 
         // Fire and forget
         (async () => {
             try {
-                const result = await syncData({
-                    cookie,
-                    tokenWithTime,
+                const syncConfig: any = {
                     deepseekApiKey: process.env.DEEPSEEK_API_KEY,
-                    onProgress: (msg, prog) => {
+                    onProgress: (msg: string, prog: number) => {
                         updateSyncStatus({
                             status: 'running',
                             message: msg,
                             progress: prog
                         });
                     }
-                });
+                };
+
+                if (cookie && tokenWithTime) {
+                    syncConfig.cookie = cookie;
+                    syncConfig.tokenWithTime = tokenWithTime;
+                }
+
+                const result = await syncData(syncConfig);
                 
                 updateSyncStatus({
                     status: result.success ? 'completed' : 'error',

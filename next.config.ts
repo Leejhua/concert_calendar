@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'intercms.damai.cn',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.tking.cn',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.moretickets.com',
       }
     ],
   },
