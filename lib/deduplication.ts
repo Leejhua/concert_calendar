@@ -86,20 +86,48 @@ function isTitleDuplicate(c1: Concert, c2: Concert): boolean {
 
 /**
  * Merges two lists of concerts, prioritizing the first list (primary).
+ * Performs "Smart Enrichment": If primary has missing data (e.g. Artist) that secondary has, fill it in.
  */
 export function mergeConcertLists(primary: Concert[], secondary: Concert[]): Concert[] {
     const merged = [...primary];
     let newCount = 0;
+    let enrichedCount = 0;
 
     for (const item of secondary) {
         // Check if this item exists in primary
-        const exists = merged.some(existing => isDuplicate(existing, item));
-        if (!exists) {
+        const existingIndex = merged.findIndex(existing => isDuplicate(existing, item));
+        
+        if (existingIndex !== -1) {
+            // Duplicate found. Check for Enrichment opportunities.
+            const existing = merged[existingIndex];
+            
+            // 1. Enrich Artist
+            const isExistingArtistInvalid = !existing.artist || existing.artist === 'Unknown' || existing.artist === '群星' || existing.artist === '待定';
+            const isNewArtistValid = item.artist && item.artist !== 'Unknown' && item.artist !== '群星' && item.artist !== '待定';
+            
+            if (isExistingArtistInvalid && isNewArtistValid) {
+                // console.log(`[Deduplication] Enriching Artist for "${existing.title}": ${existing.artist} -> ${item.artist}`);
+                existing.artist = item.artist;
+                
+                // Optionally update title if it doesn't contain the new artist name
+                if (!existing.title.includes(item.artist!)) {
+                     // Remove old generic prefixes if any
+                     let cleanTitle = existing.title.replace(/^【.*?】/, '');
+                     existing.title = `【${item.artist}】${cleanTitle}`;
+                }
+                
+                enrichedCount++;
+            }
+            
+            // 2. Enrich other fields if needed (e.g. Status, if primary is 'Unknown' and secondary is 'On Sale')
+            // (For now, just Artist is the priority)
+            
+        } else {
             merged.push(item);
             newCount++;
         }
     }
 
-    console.log(`[Deduplication] Merged ${secondary.length} secondary items. Added ${newCount} new items.`);
+    console.log(`[Deduplication] Merged ${secondary.length} secondary items. Added ${newCount} new, Enriched ${enrichedCount} existing.`);
     return merged;
 }

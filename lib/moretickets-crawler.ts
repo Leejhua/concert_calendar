@@ -1,5 +1,5 @@
 import https from 'https';
-import { Concert } from './damai-crawler';
+import { Concert, CITY_BLACKLIST } from './damai-crawler';
 
 // --- Types ---
 
@@ -133,24 +133,22 @@ export async function fetchMoreTicketsConcerts(cityId: string, page: number = 1)
     }
 }
 
-export async function fetchAllMoreTicketsConcerts(onProgress?: (msg: string) => void): Promise<Concert[]> {
+export async function fetchAllMoreTicketsConcerts(onProgress?: (msg: string, progress?: number) => void): Promise<Concert[]> {
     const cities = await fetchMoreTicketsCities();
-    console.log(`[MoreTickets] Found ${cities.length} cities.`);
     
-    // Filter to top cities to save time/resources, or use a specific list
-    // For now, let's pick top 20 cities based on common knowledge or just process all (might be slow)
-    // The API returns cities in groups. The "Hot" cities are usually in the list but not explicitly marked in the 'allCities' structure I saw.
-    // However, the user's web reference showed a "Hot Cities" section in the UI, but the API response structure I coded only extracts from 'allCities'.
-    // Let's rely on a manual list of major cities to ensure we get the important ones first.
-    const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州', '重庆', '西安', '南京', '长沙', '天津', '苏州', '郑州', '沈阳', '济南', '青岛', '大连', '哈尔滨', '福州', '厦门', '昆明', '南宁', '合肥', '石家庄', '太原', '长春', '贵阳', '兰州', '银川', '西宁', '呼和浩特', '乌鲁木齐', '海口', '三亚', '香港', '澳门'];
-    
-    const targetCityObjs = cities.filter(c => TARGET_CITIES.includes(c.cityName));
-    console.log(`[MoreTickets] Targeting ${targetCityObjs.length} major cities.`);
+    // Filter out blacklisted cities immediately
+    const targetCityObjs = cities.filter(c => {
+         const isBlacklisted = CITY_BLACKLIST.some(b => c.cityName.includes(b));
+         return !isBlacklisted;
+    });
+
+    console.log(`[MoreTickets] Found ${cities.length} cities, ${targetCityObjs.length} after blacklist.`);
 
     let allConcerts: Concert[] = [];
 
-    for (const city of targetCityObjs) {
-        if (onProgress) onProgress(`Fetching MoreTickets: ${city.cityName}`);
+    for (const [index, city] of targetCityObjs.entries()) {
+        const percentage = Math.floor((index / targetCityObjs.length) * 100);
+        if (onProgress) onProgress(`Fetching MoreTickets: ${city.cityName} (${index + 1}/${targetCityObjs.length})`, percentage);
         
         let page = 1;
         let hasMore = true;
@@ -159,7 +157,13 @@ export async function fetchAllMoreTicketsConcerts(onProgress?: (msg: string) => 
             const { items, total } = await fetchMoreTicketsConcerts(city.cityOID, page);
             
             if (items.length > 0) {
-                allConcerts.push(...items);
+                // Filter blacklisted cities
+                const validItems = items.filter(item => {
+                    const isBlacklisted = CITY_BLACKLIST.some(b => item.city.includes(b));
+                    return !isBlacklisted;
+                });
+
+                allConcerts.push(...validItems);
                 // Check if we need next page
                 // total is total items. 
                 if (page * 10 >= total) {
