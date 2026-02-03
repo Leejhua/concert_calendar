@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Loader2, Search, PanelLeft, MapPin, User, X } from 'lucide-react';
 
 export function DashboardClient() {
@@ -95,7 +96,6 @@ export function DashboardClient() {
           >
             <PanelLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold tracking-tight">演唱会租赁看板</h1>
         </div>
         <div className="flex items-center gap-4">
            <div className="relative w-64">
@@ -107,6 +107,18 @@ export function DashboardClient() {
                onChange={(e) => setSearchTerm(e.target.value)}
              />
            </div>
+           
+           <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="outline" size="sm">开发者微信</Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-auto p-4">
+              <div className="flex flex-col items-center space-y-2">
+                <img src="/wechat-qr.png" alt="Developer WeChat QR" className="w-48 h-48 object-contain" />
+                <p className="text-sm text-muted-foreground">扫码添加开发者微信</p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         </div>
       </header>
 
