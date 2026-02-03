@@ -50,9 +50,10 @@ function makeRequest(path: string, method: 'GET' | 'POST', data: any = null): Pr
         };
 
         const req = https.request(options, (res) => {
-            let body = '';
-            res.on('data', chunk => body += chunk);
+            const chunks: Buffer[] = [];
+            res.on('data', chunk => chunks.push(chunk));
             res.on('end', () => {
+                const body = Buffer.concat(chunks).toString();
                 try {
                     const json = JSON.parse(body);
                     resolve(json);
