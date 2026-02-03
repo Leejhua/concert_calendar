@@ -16,6 +16,20 @@ export async function POST(request: Request) {
              return NextResponse.json({ success: false, message: 'Sync already in progress' }, { status: 409 });
         }
 
+        // Global Cooldown Check (e.g., 4 hours)
+        // If the last successful sync was recent, skip this request to prevent abuse.
+        const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
+        // Check "completed" status specifically to ensure we only block if data is actually fresh
+        if (currentStatus.status === 'completed' && (Date.now() - currentStatus.lastUpdated) < COOLDOWN_MS) {
+            const minutesLeft = Math.ceil((COOLDOWN_MS - (Date.now() - currentStatus.lastUpdated)) / 60000);
+            console.log(`API: Sync cooldown active. ${minutesLeft} minutes remaining. Skipping sync.`);
+            return NextResponse.json({ 
+                success: true, 
+                message: `Data is fresh. Cooldown active (${minutesLeft}m remaining).`,
+                skipped: true
+            });
+        }
+
         let cookie = '';
         let tokenWithTime = '';
 

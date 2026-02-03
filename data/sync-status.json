@@ -4,10 +4,11 @@
   "total": 0,
   "current": 0,
   "message": "Sync completed",
-  "lastUpdated": 1770089483723,
+  "lastUpdated": 1770109825051,
   "result": {
     "success": true,
-    "totalNew": 7110,
-    "totalCombined": 810
+    "totalNew": 0,
+    "totalCombined": 0,
+    "message": "Sync completed"
   }
 }
