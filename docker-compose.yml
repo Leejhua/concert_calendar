@@ -5,7 +5,7 @@ services:
     # Let Docker assign a random available host port to avoid conflicts
     # The platform (Flashflock) should automatically detect the exposed port or handle routing
     ports:
-      - "3333:3000"
+      - "3000"
     expose:
       - "3000"
     # env_file:
