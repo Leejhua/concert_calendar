@@ -48,10 +48,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         
         // Auto-Sync Check (Once per session load)
         if (!autoSyncAttempted.current && data.lastUpdated > 0) {
-            const ONE_DAY = 24 * 60 * 60 * 1000;
-            // If data is older than 24h and not currently running
-            if (Date.now() - data.lastUpdated > ONE_DAY && data.status !== 'running') {
-                console.log('🔄 Data is stale (>24h), triggering auto-sync...');
+            const AUTO_SYNC_INTERVAL = 8 * 60 * 60 * 1000; // 8 hours
+            // If data is older than 8h and not currently running
+            if (Date.now() - data.lastUpdated > AUTO_SYNC_INTERVAL && data.status !== 'running') {
+                console.log('🔄 Data is stale (>8h), triggering auto-sync...');
                 autoSyncAttempted.current = true;
                 // Trigger auto sync silently
                 startSync(); 
