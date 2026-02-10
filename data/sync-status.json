@@ -3,12 +3,11 @@
   "progress": 100,
   "total": 0,
   "current": 0,
-  "message": "Sync completed",
-  "lastUpdated": 1770109825051,
+  "message": "Background Sync Success: +7115 new, 975 total.",
+  "lastUpdated": 1770712538782,
   "result": {
     "success": true,
-    "totalNew": 0,
-    "totalCombined": 0,
-    "message": "Sync completed"
+    "totalNew": 7115,
+    "totalCombined": 975
   }
 }

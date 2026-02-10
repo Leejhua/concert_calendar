@@ -32,8 +32,22 @@ export const DynamicCalendarView = ({ date, view, events }: DynamicCalendarViewP
     return eachDayOfInterval({ start, end });
   }, [date, view]);
 
-  // 2. 生成 0-23 的小时列表
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  // 2. 动态计算有事件的小时列表 (过滤掉空闲时段)
+  const hours = useMemo(() => {
+    // 找出当前视图日期范围内的所有事件
+    const activeEvents = events.filter(event => 
+      days.some(day => isSameDay(event.start, day))
+    );
+    
+    // 提取所有事件的小时
+    const activeHours = new Set(activeEvents.map(event => getHours(event.start)));
+    
+    // 如果没有事件，默认不显示任何时间段，或者显示一个提示 (这里选择返回空数组，后续处理空状态)
+    // 或者为了避免完全空白，如果没有事件，就不渲染行
+    if (activeHours.size === 0) return [];
+
+    return Array.from(activeHours).sort((a, b) => a - b);
+  }, [events, days]);
 
   // 3. 辅助函数：获取某天某小时的事件
   const getEventsForCell = (day: Date, hour: number) => {
@@ -79,14 +93,24 @@ export const DynamicCalendarView = ({ date, view, events }: DynamicCalendarViewP
       ))}
 
       {/* --- Body Rows --- */}
-      {hours.map(hour => (
-        <React.Fragment key={`row-${hour}`}>
-          {/* Time Label */}
-          <div className="border-b border-r p-2 text-xs text-muted-foreground text-right bg-muted/10">
-            {`${hour.toString().padStart(2, '0')}:00`}
-          </div>
+      {hours.length === 0 ? (
+        <div 
+          className="col-span-full py-12 text-center text-muted-foreground"
+          style={{ gridColumn: `1 / -1` }}
+        >
+          该时段暂无演出安排
+        </div>
+      ) : (
+        hours.map(hour => (
+          <React.Fragment key={`row-${hour}`}>
+            {/* Time Label - 样式增强 */}
+            <div className="border-b border-r p-2 flex items-center justify-center bg-accent/20">
+              <span className="text-lg font-bold text-primary">
+                {`${hour.toString().padStart(2, '0')}:00`}
+              </span>
+            </div>
 
-          {/* Cells */}
+            {/* Cells */}
           {days.map((day, dayIndex) => {
             const cellEvents = getEventsForCell(day, hour);
             return (
@@ -99,14 +123,19 @@ export const DynamicCalendarView = ({ date, view, events }: DynamicCalendarViewP
               >
                 <div className="flex flex-col gap-1 w-full">
                   {cellEvents.map(event => (
-                    <CalendarEventCard key={event.id} event={event} />
+                    <CalendarEventCard 
+                      key={event.id} 
+                      event={event} 
+                      showCity={view === 'day'} 
+                    />
                   ))}
                 </div>
               </div>
             );
           })}
         </React.Fragment>
-      ))}
+      ))
+    )}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import path from 'path';
 import { fetchAllMoreTicketsConcerts } from './moretickets-crawler';
 import { fetchMoreTicketsGlobalConcerts } from './moretickets-global-crawler';
 import { mergeConcertLists } from './deduplication';
+import { saveConcertsToStorage, getAllConcertsFromStorage } from './db';
 
 // --- Type Definitions ---
 export interface Concert {
@@ -47,13 +48,12 @@ export interface SyncResult {
 
 // --- Configuration ---
 const DATA_DIR = path.join(process.cwd(), 'data');
-const DATA_FILE = path.join(DATA_DIR, 'concerts.json');
 
 // Keywords that indicate a "low value" or "fake" concert
 const BLACKLIST_KEYWORDS = ['烛光', '致敬', '模仿', '重现', '同人', '纪念', '追忆', '作品音乐会', '见面会', '金曲', '情歌', '表白'];
 
 // Keywords that indicate a "fake" artist tag
-const INVALID_ARTIST_TAGS = ['演唱会', '榜', '热销', '上新', '优选', '折扣', '推荐', '必看', '演出', '麦'];
+const INVALID_ARTIST_TAGS = ['演唱会', '榜', '热销', '上新', '优选', '折扣', '推荐', '必看', '演出', '麦', '歌手', '音乐会'];
 
 // Cities to exclude (Overseas + Taiwan)
 // Keeping ONLY Mainland China + Hong Kong + Macau + Taiwan + Selected Asia
@@ -100,7 +100,7 @@ function generateSign(token: string, t: number, appKey: string, dataStr: string)
     return crypto.createHash('md5').update(strToSign).digest('hex');
 }
 
-async function fetchInitialToken(): Promise<void> {
+export async function fetchInitialToken(): Promise<void> {
     console.log('🔄 Auto-Handshake: Fetching fresh token...');
     return new Promise((resolve, reject) => {
         const api = 'mtop.damai.wireless.area.groupcity';
@@ -148,7 +148,7 @@ async function fetchInitialToken(): Promise<void> {
     });
 }
 
-function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0): Promise<any> {
+export function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0): Promise<any> {
     return new Promise((resolve, reject) => {
         const token = DAMAI_CONFIG.tokenWithTime ? DAMAI_CONFIG.tokenWithTime.split('_')[0] : '';
         const t = Date.now();
@@ -250,7 +250,7 @@ function makeRequest(api: string, dataObj: any, callbackName?: string, retryCoun
     });
 }
 
-function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
+export function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
     const results: Concert[] = [];
     if (!nodes) return results;
 
@@ -284,7 +284,7 @@ function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
 
 // --- DeepSeek Extraction ---
 
-async function extractArtistsWithDeepSeek(concerts: Concert[], apiKey: string): Promise<Concert[]> {
+export async function extractArtistsWithDeepSeek(concerts: Concert[], apiKey: string): Promise<Concert[]> {
     if (!concerts.length) return concerts;
     console.log(`🤖 DeepSeek: Processing ${concerts.length} items...`);
 
@@ -385,6 +385,36 @@ ${JSON.stringify(titlesToProcess)}
         console.error('DeepSeek Request Error:', error);
         return concerts;
     }
+}
+
+export async function getTargetCityList(): Promise<string[]> {
+    if (!DAMAI_CONFIG.cookie || !DAMAI_CONFIG.tokenWithTime) {
+        await fetchInitialToken();
+    }
+
+    const cityRes = await makeRequest('mtop.damai.wireless.area.groupcity', {
+        platform: "8", comboChannel: "2", dmChannel: "damai@damaih5_h5"
+    }, 'mtopjsonp4');
+
+    const hotCities: HotCity[] = cityRes.data?.hotCities || cityRes.data?.hotCity || [];
+    let allCities: HotCity[] = [...hotCities];
+    const groups = cityRes.data?.groups;
+    if (Array.isArray(groups)) {
+        groups.forEach((group: any) => {
+            if (Array.isArray(group.sites)) {
+                group.sites.forEach((site: any) => allCities.push({ cityId: site.cityId, cityName: site.cityName, url: site.url || '' }));
+            }
+        });
+    }
+
+    // Deduplicate & Filter Cities
+    const uniqueCitiesMap = new Map<string, HotCity>();
+    allCities.forEach(c => uniqueCitiesMap.set(c.cityId, c));
+    const uniqueCities = Array.from(uniqueCitiesMap.values())
+        .filter(c => !CITY_BLACKLIST.some(b => c.cityName.includes(b)))
+        .map(c => c.cityName);
+
+    return uniqueCities;
 }
 
 // --- Independent Task Runners ---
@@ -575,21 +605,19 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
 
         // 5. Save Data
         let existingConcerts: Concert[] = [];
-        if (fs.existsSync(DATA_FILE)) {
-            try { existingConcerts = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8')); } 
-            catch (e) { console.warn('⚠️ Failed to load existing data.'); }
+        try {
+            existingConcerts = await getAllConcertsFromStorage();
+        } catch (e) {
+            console.warn('⚠️ Failed to load existing data from storage.');
         }
 
-        const concertMap = new Map<string, Concert>();
-        existingConcerts.forEach(c => concertMap.set(c.id, c));
-        combined.forEach(c => concertMap.set(c.id, c));
-        const mergedConcerts = Array.from(concertMap.values());
+        const mergedConcerts = mergeConcertLists(existingConcerts, combined);
 
-        fs.writeFileSync(DATA_FILE, JSON.stringify(mergedConcerts, null, 2));
-        console.log(`🎉 Data saved to ${DATA_FILE}`);
+        await saveConcertsToStorage(mergedConcerts);
+        console.log(`🎉 Data saved to storage`);
         if (onProgress) onProgress('Sync complete!', 100);
 
-        return { success: true, totalNew: combined.length, totalCombined: mergedConcerts.length };
+        return { success: true, totalNew: mergedConcerts.length - existingConcerts.length, totalCombined: mergedConcerts.length };
 
     } catch (err: any) {
         console.error('❌ Fatal Error in Parallel Sync:', err);

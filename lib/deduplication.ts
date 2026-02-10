@@ -102,8 +102,8 @@ export function mergeConcertLists(primary: Concert[], secondary: Concert[]): Con
             const existing = merged[existingIndex];
             
             // 1. Enrich Artist
-            const isExistingArtistInvalid = !existing.artist || existing.artist === 'Unknown' || existing.artist === '群星' || existing.artist === '待定';
-            const isNewArtistValid = item.artist && item.artist !== 'Unknown' && item.artist !== '群星' && item.artist !== '待定';
+            const isExistingArtistInvalid = !existing.artist || existing.artist === 'Unknown' || existing.artist === '群星' || existing.artist === '待定' || existing.artist === '歌手' || existing.artist === '音乐会';
+            const isNewArtistValid = item.artist && item.artist !== 'Unknown' && item.artist !== '群星' && item.artist !== '待定' && item.artist !== '歌手' && item.artist !== '音乐会';
             
             if (isExistingArtistInvalid && isNewArtistValid) {
                 // console.log(`[Deduplication] Enriching Artist for "${existing.title}": ${existing.artist} -> ${item.artist}`);

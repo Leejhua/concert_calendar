@@ -65,7 +65,7 @@ const DateHeader = ({ label, date, onDrillDown, isOffRange }: DateHeaderProps & 
 
 // 自定义事件渲染 (月视图 - 适配 RBC 接口)
 const MonthEvent = ({ event }: EventProps<CalendarEvent>) => {
-  return <CalendarEventCard event={event} />;
+  return <CalendarEventCard event={event} showCity={false} />;
 };
 
 export function ConcertCalendar({ events }: ConcertCalendarProps) {
@@ -108,6 +108,12 @@ export function ConcertCalendar({ events }: ConcertCalendarProps) {
     [viewDate] // 依赖当前的 viewDate
   );
 
+  // 处理 "Show More" 点击
+  const handleShowMore = useCallback((events: CalendarEvent[], date: Date) => {
+    setView(Views.DAY);
+    setViewDate(date);
+  }, []);
+
   if (!isMounted) {
     return <div className="h-[calc(100vh-200px)] min-h-[600px] w-full bg-background rounded-lg border shadow-sm p-4 flex items-center justify-center text-muted-foreground">加载日历中...</div>;
   }
@@ -146,8 +152,10 @@ export function ConcertCalendar({ events }: ConcertCalendarProps) {
               previous: '上一个',
               next: '下一个',
               noEventsInRange: '这段时间内没有演唱会',
+              showMore: (total) => `+${total} 更多`,
             }}
-            popup // 启用 +x more 弹出层
+            onShowMore={handleShowMore}
+            popup={false} // 禁用默认弹出层，改为跳转到日视图
           />
         ) : (
           <DynamicCalendarView 

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1008059116823",
+    "title": "“喀秋莎”俄罗斯远东国家歌舞团大型歌舞晚会（深圳站）",
+    "image": "https://img.alicdn.com/bao/uploaded/https://img.alicdn.com/imgextra/i4/2251059038/O1CN01X036BV2GdSkwVH6CA_!!2251059038.jpg",
+    "date": "2026.10.06 周二 19:30",
+    "city": "深圳",
+    "venue": "华夏艺术中心",
+    "price": "180",
+    "status": "去购票",
+    "category": "演唱会",
+    "artist": "",
+    "updatedAt": 1770710548880
+  },
+  {
+    "id": "1009809594753",
+    "title": "乌兰图雅“花开四季”天津演唱会国庆专场",
+    "image": "https://img.alicdn.com/bao/uploaded/i4/2251059038/O1CN01qTwNVw2GdSl6MaW2W_!!4611686018427383646-0-item_pic.jpg",
+    "date": "2026.10.02 周五 19:30",
+    "city": "天津",
+    "venue": "天津大礼堂大剧场",
+    "price": "180",
+    "status": "去购票",
+    "category": "演唱会",
+    "artist": "乌兰图雅",
+    "is_famous": true,
+    "updatedAt": 1770710562311
+  },
+  {
+    "id": "mtglobal_696310bcaa7fe10001845219",
+    "title": "Bruno Mars（布鲁诺・马尔斯） The Romantic Tour-圣克拉拉站",
+    "image": "https://online-static-global.moretickets.com/show/fbb63f579d2c4747ac6ff5874bff882d.jpg",
+    "date": "2026.10.10",
+    "city": "美国",
+    "venue": "李维斯体育场",
+    "price": "0",
+    "status": "PENDING",
+    "category": "演唱会",
+    "artist": "",
+    "updatedAt": 1770710541628
+  },
+  {
+    "id": "mtglobal_69630fdfaa7fe10001843585",
+    "title": "Bruno Mars（布鲁诺・马尔斯） The Romantic Tour-英格尔伍德站",
+    "image": "https://online-static-global.moretickets.com/show/8e8a8cdf39994620b1df5572e811d207.jpg",
+    "date": "2026.10.02",
+    "city": "美国",
+    "venue": "SoFi 体育场",
+    "price": "0",
+    "status": "PENDING",
+    "category": "演唱会",
+    "artist": "",
+    "updatedAt": 1770710541628
+  },
+  {
+    "id": "mtglobal_6963114e906e0f00017067e4",
+    "title": "Bruno Mars（布鲁诺・马尔斯） The Romantic Tour-温哥华站",
+    "image": "https://online-static-global.moretickets.com/show/62e4d6766f034598a793bd4ad12664a7.jpg",
+    "date": "2026.10.04",
+    "city": "加拿大",
+    "venue": "不列颠哥伦比亚体育馆",
+    "price": "0",
+    "status": "PENDING",
+    "category": "演唱会",
+    "artist": "",
+    "updatedAt": 1770710542551
+  }
+]

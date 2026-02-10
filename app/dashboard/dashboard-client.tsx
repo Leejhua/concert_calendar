@@ -25,9 +25,9 @@ export function DashboardClient() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // 获取足够多的数据以填充日历 (比如 500 条)
+        // 获取足够多的数据以填充日历 (比如 2000 条)
         // 实际生产环境可能需要按月加载，但 demo 阶段一次性拉取更简单
-        const res = await fetch('/api/concerts?pageSize=500');
+        const res = await fetch('/api/concerts?pageSize=2000');
         const json = await res.json();
         if (json.success) {
           setConcerts(json.data);
@@ -110,7 +110,7 @@ export function DashboardClient() {
            
            <HoverCard>
             <HoverCardTrigger asChild>
-              <Button variant="outline" size="sm">开发者微信</Button>
+              <Button variant="outline" size="sm">联系开发者</Button>
             </HoverCardTrigger>
             <HoverCardContent className="w-auto p-4">
               <div className="flex flex-col items-center space-y-2">

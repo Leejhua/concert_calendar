@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getAllConcertsFromStorage, getConcertsByMonth } from '@/lib/db';
 
 // --- Type Definitions ---
 export interface Concert {
@@ -17,29 +16,34 @@ export interface Concert {
   updatedAt?: number;
 }
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'concerts.json');
-
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
   const city = searchParams.get('city'); // City name (e.g. "北京")
   const search = searchParams.get('search'); // Search keyword
+  const month = searchParams.get('month'); // Format: YYYY-MM
   
   try {
-    // 1. Read Data from Local JSON
-    if (!fs.existsSync(DATA_FILE)) {
-      return NextResponse.json({
-        success: true,
-        total: 0,
-        page,
-        data: [],
-        message: "No local data found. Please run data sync script."
-      });
+    // 1. Read Data
+    let concerts: Concert[] = [];
+    
+    if (month) {
+        // Optimization: If month is specified, only load that month
+        // Also load previous and next month to handle edge cases or month switching smoothness?
+        // For now, strict month filtering if requested.
+        concerts = await getConcertsByMonth(month);
+    } else {
+        // Default: Load ALL data (backward compatibility & global search)
+        // In production with huge data, this should be avoided, but for <5000 items it's fine.
+        concerts = await getAllConcertsFromStorage();
     }
 
-    const fileContent = fs.readFileSync(DATA_FILE, 'utf-8');
-    let concerts: Concert[] = JSON.parse(fileContent);
+    if (concerts.length === 0 && !month) {
+       // Only return 404/empty if we tried to load EVERYTHING and found nothing.
+       // If searching specific month, empty is valid result.
+       // But wait, the original code returned empty array with message.
+    }
 
     // 2. Filter Data
     if (city) {

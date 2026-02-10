@@ -6,9 +6,10 @@ import { CalendarEvent } from '@/lib/types';
 
 interface CalendarEventCardProps {
   event: CalendarEvent;
+  showCity?: boolean;
 }
 
-export const CalendarEventCard = ({ event }: CalendarEventCardProps) => {
+export const CalendarEventCard = ({ event, showCity = false }: CalendarEventCardProps) => {
   const artist = event.resource.artist;
   let displayTitle = event.title;
   let showArtistTag = false;
@@ -34,7 +35,12 @@ export const CalendarEventCard = ({ event }: CalendarEventCardProps) => {
                 {artist}
               </span>
             )}
-            <span className="truncate">{displayTitle}</span>
+            <span className="truncate flex-1">{displayTitle}</span>
+            {showCity && (
+              <span className="bg-muted text-muted-foreground px-1.5 rounded-[3px] ml-1.5 whitespace-nowrap flex-shrink-0 leading-tight font-medium border border-border/50" style={{ fontSize: '10px', paddingBottom: '1px' }}>
+                {event.resource.city}
+              </span>
+            )}
           </div>
         </div>
       </HoverCardTrigger>

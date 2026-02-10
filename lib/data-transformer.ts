@@ -7,7 +7,8 @@ export function transformConcertsToEvents(concerts: Concert[]): CalendarEvent[] 
     // 1. 提取日期部分
     // 支持 "2026-04-11", "2026.04.11", "2026/04/11", "2026.04.11-04.12" 等格式
     // 优先使用正则提取 YYYY-MM-DD 或 YYYY.MM.DD 或 YYYY/MM/DD
-    const dateMatch = concert.date.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+    // 去掉 ^ 锚点以支持前缀空格或其他字符
+    const dateMatch = concert.date.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
     
     let startDate = new Date();
     let isValidDate = false;
