@@ -68,7 +68,11 @@ const MonthEvent = ({ event }: EventProps<CalendarEvent>) => {
   return <CalendarEventCard event={event} showCity={false} />;
 };
 
+import { MobileConcertCalendar } from './MobileConcertCalendar';
+import { useMediaQuery } from '@/lib/hooks';
+
 export function ConcertCalendar({ events }: ConcertCalendarProps) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [view, setView] = useState<View>(Views.MONTH);
   const [viewDate, setViewDate] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
@@ -116,6 +120,14 @@ export function ConcertCalendar({ events }: ConcertCalendarProps) {
 
   if (!isMounted) {
     return <div className="h-[calc(100vh-200px)] min-h-[600px] w-full bg-background rounded-lg border shadow-sm p-4 flex items-center justify-center text-muted-foreground">加载日历中...</div>;
+  }
+
+  if (!isDesktop) {
+    return (
+      <div className="h-[calc(100vh-140px)] w-full bg-background rounded-lg border shadow-sm overflow-hidden">
+        <MobileConcertCalendar events={events} />
+      </div>
+    );
   }
 
   return (

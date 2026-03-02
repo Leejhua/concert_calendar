@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Loader2, Search, PanelLeft, MapPin, User, X } from 'lucide-react';
+import { MobileDashboard } from '@/components/MobileDashboard';
 
 export function DashboardClient() {
   const [concerts, setConcerts] = useState<Concert[]>([]);
@@ -20,6 +21,24 @@ export function DashboardClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [filterMode, setFilterMode] = useState<'city' | 'artist'>('city');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 检测屏幕尺寸
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 初始加载所有数据
   useEffect(() => {
@@ -84,6 +103,22 @@ export function DashboardClient() {
     return transformConcertsToEvents(filteredConcerts);
   }, [filteredConcerts]);
 
+  if (isMobile) {
+    return (
+      <MobileDashboard
+        events={events}
+        cityStats={cityStats}
+        artistStats={artistStats}
+        selectedCity={selectedCity}
+        selectedArtist={selectedArtist}
+        searchTerm={searchTerm}
+        onCityChange={setSelectedCity}
+        onArtistChange={setSelectedArtist}
+        onSearchChange={setSearchTerm}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <header className="border-b px-4 py-3 flex items-center justify-between bg-background z-10">
@@ -122,10 +157,23 @@ export function DashboardClient() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* 移动端遮罩层 */}
+        {isMobile && isSidebarOpen && (
+          <div 
+            className="absolute inset-0 bg-black/50 z-20"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* 左侧侧边栏 */}
         <aside 
-            className={`${isSidebarOpen ? 'w-64 border-r' : 'w-0'} bg-muted/10 flex flex-col transition-all duration-300 overflow-hidden`}
+            className={`
+              ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-0'} 
+              ${isSidebarOpen ? 'w-64' : 'w-0'} 
+              bg-background border-r flex flex-col transition-all duration-300 overflow-hidden
+              fixed md:relative z-30 h-full
+            `}
         >
           <div className="p-4 border-b space-y-4">
             <div className="flex rounded-lg bg-muted p-1">

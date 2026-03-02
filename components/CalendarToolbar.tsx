@@ -149,40 +149,51 @@ export const CalendarToolbar = ({ date, view, onViewChange, onDateChange, events
   };
 
   return (
-    <div className="flex items-center justify-between mb-4 px-2">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={goToBack}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" onClick={goToCurrent}>
-          今天
-        </Button>
-        <Button variant="outline" size="icon" onClick={goToNext}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+    <div className="flex flex-col md:flex-row items-center justify-between mb-4 px-2 gap-4 md:gap-0">
+      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={goToBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" onClick={goToCurrent} className="hidden sm:inline-flex">
+            今天
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToNext}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="ml-2">{label()}</div>
+        {/* Mobile "Today" button if hidden above, or just rely on manual nav */}
       </div>
       
-      <div className="flex gap-2">
-        <Button 
-          variant={view === 'month' ? 'default' : 'ghost'} 
-          onClick={() => onViewChange('month')}
-        >
-          月
-        </Button>
-        <Button 
-          variant={view === 'week' ? 'default' : 'ghost'} 
-          onClick={() => onViewChange('week')}
-        >
-          周
-        </Button>
-        <Button 
-          variant={view === 'day' ? 'default' : 'ghost'} 
-          onClick={() => onViewChange('day')}
-        >
-          日
-        </Button>
-        <div className="w-px h-8 bg-border mx-1" />
+      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end overflow-x-auto pb-2 md:pb-0">
+        <div className="flex gap-1 border rounded-md p-1 bg-muted/20">
+          <Button 
+            variant={view === 'month' ? 'secondary' : 'ghost'} 
+            size="sm"
+            onClick={() => onViewChange('month')}
+            className="h-8 px-3"
+          >
+            月
+          </Button>
+          <Button 
+            variant={view === 'week' ? 'secondary' : 'ghost'} 
+            size="sm"
+            onClick={() => onViewChange('week')}
+            className="h-8 px-3"
+          >
+            周
+          </Button>
+          <Button 
+            variant={view === 'day' ? 'secondary' : 'ghost'} 
+            size="sm"
+            onClick={() => onViewChange('day')}
+            className="h-8 px-3"
+          >
+            日
+          </Button>
+        </div>
+        <div className="w-px h-8 bg-border mx-1 hidden sm:block" />
         <CookieConfigDialog />
       </div>
     </div>

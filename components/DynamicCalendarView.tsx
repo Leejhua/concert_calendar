@@ -64,14 +64,16 @@ export const DynamicCalendarView = ({ date, view, events }: DynamicCalendarViewP
   const gridTemplateColumns = `4rem repeat(${days.length}, minmax(0, 1fr))`;
 
   return (
-    <div 
-      className="h-full overflow-auto border rounded-md bg-background grid auto-rows-min"
-      style={{ gridTemplateColumns }}
-    >
-      {/* --- Header Row --- */}
-      
-      {/* Corner (Time Header) */}
-      <div className="border-b border-r bg-muted/30 sticky top-0 z-20 h-14" />
+    <div className="h-full overflow-hidden flex flex-col border rounded-md bg-background">
+      <div className="flex-1 overflow-auto">
+        <div 
+          className="grid auto-rows-min min-w-[600px] md:min-w-0"
+          style={{ gridTemplateColumns }}
+        >
+          {/* --- Header Row --- */}
+          
+          {/* Corner (Time Header) */}
+          <div className="border-b border-r bg-muted/30 sticky top-0 left-0 z-30 h-14" />
       
       {/* Days Header */}
       {days.map((day, index) => (
@@ -98,44 +100,44 @@ export const DynamicCalendarView = ({ date, view, events }: DynamicCalendarViewP
           className="col-span-full py-12 text-center text-muted-foreground"
           style={{ gridColumn: `1 / -1` }}
         >
-          该时段暂无演出安排
+          本周段暂无演出
         </div>
       ) : (
-        hours.map(hour => (
-          <React.Fragment key={`row-${hour}`}>
-            {/* Time Label - 样式增强 */}
-            <div className="border-b border-r p-2 flex items-center justify-center bg-accent/20">
-              <span className="text-lg font-bold text-primary">
-                {`${hour.toString().padStart(2, '0')}:00`}
-              </span>
-            </div>
-
-            {/* Cells */}
-          {days.map((day, dayIndex) => {
-            const cellEvents = getEventsForCell(day, hour);
-            return (
-              <div 
-                key={`cell-${hour}-${dayIndex}`} 
-                className={cn(
-                  "border-b border-r last:border-r-0 p-1 min-h-[80px] transition-colors",
-                  isToday(day) ? "bg-accent/5" : "hover:bg-muted/5"
-                )}
-              >
-                <div className="flex flex-col gap-1 w-full">
-                  {cellEvents.map(event => (
-                    <CalendarEventCard 
-                      key={event.id} 
-                      event={event} 
-                      showCity={view === 'day'} 
-                    />
-                  ))}
-                </div>
+        hours.map((hour) => {
+          return (
+            <React.Fragment key={`row-${hour}`}>
+              {/* Time Label (Sticky Left) */}
+              <div className="border-b border-r bg-accent/20 flex items-center justify-center sticky left-0 z-10 bg-background/95 backdrop-blur">
+                 <span className="text-lg font-bold text-primary">
+                  {`${hour.toString().padStart(2, '0')}:00`}
+                </span>
               </div>
-            );
-          })}
-        </React.Fragment>
-      ))
-    )}
+              
+              {days.map((day, dayIndex) => {
+                const cellEvents = getEventsForCell(day, hour);
+                return (
+                  <div 
+                    key={`cell-${dayIndex}-${hour}`}
+                    className="border-b border-r last:border-r-0 p-1 min-h-[80px]"
+                  >
+                    <div className="flex flex-col gap-1">
+                      {cellEvents.map(event => (
+                        <CalendarEventCard 
+                          key={event.id} 
+                          event={event} 
+                          showCity={view === 'day'} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          );
+        })
+      )}
+        </div>
+      </div>
     </div>
   );
 };

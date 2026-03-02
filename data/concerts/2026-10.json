@@ -64,5 +64,19 @@
     "category": "演唱会",
     "artist": "",
     "updatedAt": 1770710542551
+  },
+  {
+    "id": "1022994239708",
+    "title": "赵传2026《当我们年轻的时候》全国巡回演唱会-石家庄站",
+    "image": "https://img.alicdn.com/bao/uploaded/https://img.alicdn.com/imgextra/i4/2251059038/O1CN01JpiRcH2GdSlbvfJG7_!!2251059038.jpg",
+    "date": "2026.10.17 周六 19:30",
+    "city": "石家庄",
+    "venue": "石家庄国际会展中心8号馆",
+    "price": "380",
+    "status": "去购票",
+    "category": "演唱会",
+    "artist": "赵传",
+    "is_famous": true,
+    "updatedAt": 1772446087325
   }
 ]
