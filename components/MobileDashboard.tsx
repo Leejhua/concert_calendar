@@ -31,6 +31,7 @@ import { format, isSameDay, addDays, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSwipeable } from 'react-swipeable';
+import { Virtuoso } from 'react-virtuoso';
 
 interface MobileDashboardProps {
   events: CalendarEvent[];
@@ -105,8 +106,9 @@ export function MobileDashboard({
         setSelectedDate(subDays(selectedDate, 1));
       }
     },
-    preventScrollOnSwipe: true,
-    trackMouse: true
+    preventScrollOnSwipe: false,
+    trackMouse: false,
+    delta: 30 // Require 30px movement to trigger swipe, reducing accidental triggers
   });
 
   return (
@@ -346,7 +348,7 @@ export function MobileDashboard({
       </div>
 
       {/* 列表内容区 */}
-      <div className="flex-1 overflow-hidden flex flex-col" {...handlers}>
+      <div className="flex-1 overflow-hidden flex flex-col touch-pan-y" {...handlers}>
         {/* 状态栏 */}
         <div className="px-4 py-2 bg-muted/10 border-b flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2">
@@ -364,14 +366,17 @@ export function MobileDashboard({
           </Badge>
         </div>
 
-        <ScrollArea className="flex-1 bg-muted/5">
-          <div className="p-3 space-y-3 pb-20">
-            {dateFilteredEvents.length > 0 ? (
-              dateFilteredEvents.map((event, index) => (
+        {/* 列表内容区 - 使用 Virtuoso 虚拟化列表 */}
+        <div className="flex-1 bg-muted/5 p-3 pb-20">
+          {dateFilteredEvents.length > 0 ? (
+            <Virtuoso
+              style={{ height: '100%' }}
+              data={dateFilteredEvents}
+              itemContent={(index, event) => (
                 <div
                   key={`${event.id}-${index}`}
                   onClick={() => handleEventClick(event)}
-                  className="group bg-card hover:bg-accent/50 border rounded-lg p-3 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+                  className="group bg-card hover:bg-accent/50 border rounded-lg p-3 mb-3 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
                 >
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 space-y-1.5">
@@ -398,24 +403,24 @@ export function MobileDashboard({
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                  <CalendarIcon className="w-6 h-6 opacity-50" />
-                </div>
-                <p className="text-sm">该日暂无演出安排</p>
-                <Button 
-                  variant="link" 
-                  onClick={() => setSelectedDate(undefined)}
-                  className="mt-2 text-xs"
-                >
-                  查看全部
-                </Button>
+              )}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                <CalendarIcon className="w-6 h-6 opacity-50" />
               </div>
-            )}
-          </div>
-        </ScrollArea>
+              <p className="text-sm">该日暂无演出安排</p>
+              <Button 
+                variant="link" 
+                onClick={() => setSelectedDate(undefined)}
+                className="mt-2 text-xs"
+              >
+                查看全部
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 详情抽屉 */}

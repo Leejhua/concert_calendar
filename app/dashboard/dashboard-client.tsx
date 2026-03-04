@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Loader2, Search, PanelLeft, MapPin, User, X } from 'lucide-react';
 import { MobileDashboard } from '@/components/MobileDashboard';
+import { format } from 'date-fns';
 
 export function DashboardClient() {
   const [concerts, setConcerts] = useState<Concert[]>([]);
@@ -40,24 +41,48 @@ export function DashboardClient() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 初始加载所有数据
+  // 初始加载数据 (优化策略：先加载当月，再静默加载全部)
   useEffect(() => {
-    async function fetchData() {
+    let isMounted = true;
+
+    async function fetchProgressively() {
       try {
-        // 获取足够多的数据以填充日历 (比如 2000 条)
-        // 实际生产环境可能需要按月加载，但 demo 阶段一次性拉取更简单
-        const res = await fetch('/api/concerts?pageSize=2000');
-        const json = await res.json();
-        if (json.success) {
-          setConcerts(json.data);
+        // 1. 优先加载当月数据 (Fast First Paint)
+        const currentMonth = format(new Date(), 'yyyy-MM');
+        const resMonth = await fetch(`/api/concerts?month=${currentMonth}`);
+        const jsonMonth = await resMonth.json();
+        
+        if (isMounted && jsonMonth.success) {
+          setConcerts(jsonMonth.data);
+          setLoading(false); // 立即展示 UI
+        }
+
+        // 2. 静默加载所有数据 (Full Data)
+        // 延迟一点点，让 UI 先渲染完成
+        await new Promise(r => setTimeout(r, 100));
+        
+        const resAll = await fetch('/api/concerts?pageSize=2000');
+        const jsonAll = await resAll.json();
+        
+        if (isMounted && jsonAll.success) {
+          // 如果数据量有变化，才更新 (简单的长度检查，或者直接更新)
+          setConcerts(prev => {
+             if (prev.length === jsonAll.data.length) return prev;
+             return jsonAll.data;
+          });
         }
       } catch (error) {
         console.error('Failed to fetch concerts:', error);
-      } finally {
-        setLoading(false);
+        // 如果第一步失败了，确保 loading 结束
+        if (isMounted) setLoading(false);
       }
     }
-    fetchData();
+
+    fetchProgressively();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // 提取所有城市并统计数量

@@ -1,13 +1,13 @@
 {
-  "status": "completed",
-  "progress": 100,
+  "status": "running",
+  "progress": 30,
   "total": 0,
   "current": 0,
-  "message": "Background Sync Success: +261 new, 1236 total.",
-  "lastUpdated": 1772448170748,
+  "message": "Fetching Damai: 重庆 (53/337)...",
+  "lastUpdated": 1772616839357,
   "result": {
     "success": true,
-    "totalNew": 261,
-    "totalCombined": 1236
+    "totalNew": 6,
+    "totalCombined": 1242
   }
 }

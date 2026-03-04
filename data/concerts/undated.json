@@ -332,5 +332,18 @@
     "category": "演唱会",
     "artist": "",
     "updatedAt": 1772446085990
+  },
+  {
+    "id": "mtglobal_697ad5733f844b0001819b17",
+    "title": "【双日票】ComplexCon Hong Kong 2026-香港站",
+    "image": "https://online-static-global.moretickets.com/show/f01c5e08a53645408d422f73cdffbf62.png",
+    "date": "3月21日-3月22日 雙日通票",
+    "city": "中国香港",
+    "venue": "亚洲国际博览馆",
+    "price": "5987",
+    "status": "销售中",
+    "category": "演唱会",
+    "artist": "",
+    "updatedAt": 1772503675880
   }
 ]
