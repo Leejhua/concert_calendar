@@ -112,7 +112,7 @@ export function MobileDashboard({
   });
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-muted/5 overflow-hidden">
       {/* 顶部导航栏 */}
       <div className="flex items-center justify-between px-4 py-2 border-b bg-background z-20 shadow-sm shrink-0">
         <Button
@@ -170,8 +170,8 @@ export function MobileDashboard({
               "transition-all duration-300",
               displayTab === 'filter' ? "opacity-100 block" : "opacity-0 hidden absolute"
             )}>
-              <div className="flex flex-col h-full max-h-[60vh] animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex border-b p-2 bg-muted/30">
+              <div className="flex flex-col max-h-[60vh] animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex border-b p-2 bg-muted/30 shrink-0">
                   <div className="flex flex-1 bg-muted rounded-md p-1">
                     <button
                       onClick={() => setFilterType('city')}
@@ -203,13 +203,13 @@ export function MobileDashboard({
                     </Button>
                   )}
                 </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-2 grid grid-cols-3 gap-2">
+                <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+                  <div className="p-2 pb-20 grid grid-cols-3 gap-2">
                     {filterType === 'city' ? (
                       <>
                         <Button
                           variant={selectedCity === null ? "secondary" : "outline"}
-                          className="text-xs h-8 justify-start px-2"
+                          className="text-xs h-9 justify-start px-2"
                           onClick={() => onCityChange(null)}
                         >
                           全部城市
@@ -218,7 +218,7 @@ export function MobileDashboard({
                           <Button
                             key={city}
                             variant={selectedCity === city ? "secondary" : "outline"}
-                            className="text-xs h-8 justify-between px-2"
+                            className="text-xs h-9 justify-between px-2"
                             onClick={() => onCityChange(city)}
                           >
                             <span className="truncate">{city}</span>
@@ -230,7 +230,7 @@ export function MobileDashboard({
                       <>
                         <Button
                           variant={selectedArtist === null ? "secondary" : "outline"}
-                          className="text-xs h-8 justify-start px-2"
+                          className="text-xs h-9 justify-start px-2"
                           onClick={() => onArtistChange(null)}
                         >
                           全部艺人
@@ -239,7 +239,7 @@ export function MobileDashboard({
                           <Button
                             key={artist}
                             variant={selectedArtist === artist ? "secondary" : "outline"}
-                            className="text-xs h-8 justify-between px-2"
+                            className="text-xs h-9 justify-between px-2"
                             onClick={() => onArtistChange(artist)}
                           >
                             <span className="truncate max-w-[80px]">{artist}</span>
@@ -249,7 +249,7 @@ export function MobileDashboard({
                       </>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             </div>
 
@@ -367,16 +367,20 @@ export function MobileDashboard({
         </div>
 
         {/* 列表内容区 - 使用 Virtuoso 虚拟化列表 */}
-        <div className="flex-1 bg-muted/5 p-3 pb-20">
+      <div className="flex-1 bg-muted/5 relative">
           {dateFilteredEvents.length > 0 ? (
             <Virtuoso
-              style={{ height: '100%' }}
+              style={{ height: '100%', width: '100%' }}
               data={dateFilteredEvents}
+              components={{
+                Footer: () => <div className="h-32" /> // Add bottom padding to avoid obstruction
+              }}
               itemContent={(index, event) => (
+                <div className="px-3 pt-3">
                 <div
                   key={`${event.id}-${index}`}
                   onClick={() => handleEventClick(event)}
-                  className="group bg-card hover:bg-accent/50 border rounded-lg p-3 mb-3 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+                  className="group bg-card hover:bg-accent/50 border rounded-lg p-3 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
                 >
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 space-y-1.5">
@@ -403,6 +407,7 @@ export function MobileDashboard({
                     </div>
                   </div>
                 </div>
+                </div>
               )}
             />
           ) : (
@@ -423,6 +428,9 @@ export function MobileDashboard({
         </div>
       </div>
 
+      {/* 底部安全区垫片，强制将内容顶起 */}
+      <div className="h-[env(safe-area-inset-bottom)] bg-transparent pointer-events-none shrink-0" />
+      
       {/* 详情抽屉 */}
       <Drawer open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DrawerContent>
