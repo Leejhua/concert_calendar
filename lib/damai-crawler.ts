@@ -44,6 +44,8 @@ export interface SyncResult {
     totalNew: number;
     totalCombined: number;
     message?: string;
+    timedOutSources?: string[];   // sources that hit the timeout
+    failedSources?: string[];     // sources that errored out
 }
 
 // --- Configuration ---
@@ -87,6 +89,35 @@ let DAMAI_CONFIG: DamaiConfig = {
     onProgress: undefined
 };
 
+const REQUEST_TIMEOUT_MS = 20000;
+const REQUEST_MAX_RETRY = 3;
+const TASK_TIMEOUT_MS = 30 * 60 * 1000;
+const RETRYABLE_RET_MARKERS = [
+    'FAIL_SYS_TOKEN_EXPIRED',
+    'FAIL_SYS_TOKEN_EMPTY',
+    'FAIL_SYS_ILLEGAL_ACCESS',
+    'FAIL_SYS_USER_VALIDATE',
+    'RGV587_ERROR',
+    'FAIL_BIZ_SYSTEM_ERROR',
+    'FAIL_SYS_TRAFFIC_LIMIT'
+];
+
+// --- Anti-Detection: Rotating User-Agents ---
+const USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1',
+];
+
+function getRandomUA(): string {
+    return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
 // --- Helpers ---
 
 function ensureDataDir() {
@@ -98,6 +129,28 @@ function ensureDataDir() {
 function generateSign(token: string, t: number, appKey: string, dataStr: string) {
     const strToSign = `${token}&${t}&${appKey}&${dataStr}`;
     return crypto.createHash('md5').update(strToSign).digest('hex');
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/** Random delay between min and max ms */
+function randomDelay(minMs: number, maxMs: number): Promise<void> {
+    return delay(minMs + Math.floor(Math.random() * (maxMs - minMs)));
+}
+
+function getBackoffMs(retryCount: number): number {
+    return Math.min(2000 * Math.pow(2, retryCount), 16000) + Math.floor(Math.random() * 1000);
+}
+
+function getPrimaryRetMessage(json: any): string {
+    if (!json || !Array.isArray(json.ret) || !json.ret.length) return '';
+    return String(json.ret[0] || '');
+}
+
+function isRetryableRet(message: string): boolean {
+    return RETRYABLE_RET_MARKERS.some(marker => message.includes(marker));
 }
 
 export async function fetchInitialToken(): Promise<void> {
@@ -120,7 +173,7 @@ export async function fetchInitialToken(): Promise<void> {
             method: 'GET',
             headers: {
                 'accept': 'application/json',
-                'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                'user-agent': getRandomUA(),
             }
         };
 
@@ -143,6 +196,9 @@ export async function fetchInitialToken(): Promise<void> {
             }
         });
 
+        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+            req.destroy(new Error(`Handshake timeout after ${REQUEST_TIMEOUT_MS}ms`));
+        });
         req.on('error', (e) => reject(e));
         req.end();
     });
@@ -177,14 +233,41 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
             method: 'GET',
             headers: {
                 'accept': '*/*',
-                'accept-language': 'zh-CN,zh;q=0.9',
+                'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
                 'cookie': DAMAI_CONFIG.cookie,
                 'referer': DAMAI_CONFIG.referer,
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+                'user-agent': getRandomUA(),
             }
         };
 
+        const retryWithBackoff = (reason: string, refreshToken = false) => {
+            if (retryCount >= REQUEST_MAX_RETRY) {
+                reject(new Error(`[${api}] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
+                return;
+            }
+            const nextAttempt = retryCount + 1;
+            const waitMs = getBackoffMs(retryCount);
+            const runRetry = async () => {
+                try {
+                    if (refreshToken) {
+                        await fetchInitialToken();
+                    }
+                    resolve(makeRequest(api, dataObj, callbackName, nextAttempt));
+                } catch (err: any) {
+                    reject(new Error(`[${api}] retry preparation failed: ${err.message}`));
+                }
+            };
+            console.warn(`⚠️ [${api}] ${reason}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
+            setTimeout(runRetry, waitMs);
+        };
+
         const req = https.request(options, (res) => {
+            const statusCode = res.statusCode || 0;
+            if (statusCode >= 500) {
+                retryWithBackoff(`HTTP ${statusCode}`);
+                return;
+            }
+
             // Update cookies
             const setCookie = res.headers['set-cookie'];
             if (setCookie) {
@@ -209,7 +292,7 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
                         const end = body.lastIndexOf(')');
                         json = JSON.parse(body.substring(start, end));
                     } catch (e: any) {
-                        reject(new Error(`Failed to parse JSONP: ${e.message}`));
+                        retryWithBackoff(`Failed to parse JSONP: ${e.message}`);
                         return;
                     }
                 } else {
@@ -227,25 +310,31 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
 
                 if (!json) {
                     console.error('Raw response parsing failed:', body.substring(0, 200));
-                    reject(new Error('Failed to parse JSON response'));
+                    retryWithBackoff('Failed to parse JSON response');
                     return;
                 }
 
-                // Token Expiry / Empty Check
-                if (json.ret && json.ret[0] && (json.ret[0].startsWith('FAIL_SYS_TOKEN_EXPIRED') || json.ret[0].startsWith('FAIL_SYS_TOKEN_EMPTY'))) {
-                    if (retryCount < 3) {
-                        console.log(`🔄 Token expired or empty (${json.ret[0]}), retrying... (Attempt ${retryCount + 1})`);
-                        resolve(makeRequest(api, dataObj, callbackName, retryCount + 1));
+                const primaryRet = getPrimaryRetMessage(json);
+                if (primaryRet) {
+                    if (primaryRet.startsWith('FAIL_SYS_TOKEN_EXPIRED') || primaryRet.startsWith('FAIL_SYS_TOKEN_EMPTY')) {
+                        retryWithBackoff(primaryRet, true);
                         return;
-                    } else {
-                        console.error('❌ Token refresh failed after multiple retries.');
+                    }
+                    if (isRetryableRet(primaryRet)) {
+                        retryWithBackoff(primaryRet);
+                        return;
                     }
                 }
                 resolve(json);
             });
         });
 
-        req.on('error', (e) => reject(e));
+        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+            req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+        });
+        req.on('error', (e: any) => {
+            retryWithBackoff(e.message || 'Network error');
+        });
         req.end();
     });
 }
@@ -453,15 +542,26 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
 
     let allConcerts: Concert[] = [];
     const citiesToFetch = uniqueCities;
+    // Track failed cities for logging (don't block the whole sync)
+    const failedCities: string[] = [];
 
     for (const [index, city] of citiesToFetch.entries()) {
         const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85); // 5% -> 90%
         if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
         
         const fetchedIdsInThisCity = new Set<string>();
+        let cityErrorCount = 0;
+        let consecutiveEmptyPages = 0;
 
         for (let page = 1; page <= 50; page++) {
-            await new Promise(r => setTimeout(r, Math.floor(Math.random() * 1000) + 500)); // Delay
+            // Randomized delay: 1.5-4s between pages (longer for later pages to avoid rate limits)
+            const baseDelay = page <= 3 ? 1500 : 2500;
+            await randomDelay(baseDelay, baseDelay + 2000);
+
+            const cityStartPercent = 5 + Math.floor((index / citiesToFetch.length) * 85);
+            const citySpanPercent = Math.max(1, Math.floor(85 / citiesToFetch.length));
+            const pageProgress = cityStartPercent + Math.min(citySpanPercent, Math.floor((page / 50) * citySpanPercent));
+            if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length}) - page ${page}`, pageProgress);
 
             const args = {
                 comboConfigRule: "true", sortType: "3", latitude: "0", longitude: "0",
@@ -478,7 +578,14 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
 
                 if (res.ret && res.ret[0].startsWith('SUCCESS')) {
                     const items = parseConcertNodes(res.data?.nodes, city.cityName);
-                    if (items.length === 0) break;
+                    cityErrorCount = 0; // reset on success
+
+                    if (items.length === 0) {
+                        consecutiveEmptyPages++;
+                        if (consecutiveEmptyPages >= 2) break; // 2 empty pages = done
+                        continue;
+                    }
+                    consecutiveEmptyPages = 0;
 
                     let newItemsCount = 0;
                     for (const item of items) {
@@ -490,13 +597,44 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                     }
                     if (newItemsCount === 0 || items.length < 20) break;
                 } else {
-                    break;
+                    cityErrorCount++;
+                    const retMsg = getPrimaryRetMessage(res) || 'Unknown ret';
+                    console.warn(`Damai ${city.cityName} page ${page} non-success: ${retMsg}`);
+
+                    // If risk control detected, back off longer before retry
+                    const isRiskControl = retMsg.includes('RGV587') || retMsg.includes('TRAFFIC_LIMIT') || retMsg.includes('ILLEGAL_ACCESS');
+                    if (isRiskControl) {
+                        console.warn(`⚠️ Risk control detected for ${city.cityName}. Backing off 15-30s...`);
+                        await randomDelay(15000, 30000);
+                    }
+
+                    if (cityErrorCount >= 3) {
+                        console.warn(`Damai ${city.cityName} reached error threshold, skipping.`);
+                        failedCities.push(city.cityName);
+                        break;
+                    }
+                    await delay(getBackoffMs(cityErrorCount));
                 }
             } catch (err: any) {
-                console.error(`   Page ${page}: Error - ${err.message}`);
-                break;
+                cityErrorCount++;
+                console.error(`Damai ${city.cityName} page ${page}: ${err.message}`);
+                if (cityErrorCount >= 3) {
+                    console.warn(`Damai ${city.cityName} skipped after repeated errors.`);
+                    failedCities.push(city.cityName);
+                    break;
+                }
+                await delay(getBackoffMs(cityErrorCount));
             }
         }
+
+        // Inter-city delay: 3-7s to avoid triggering rate limits across cities
+        if (index < citiesToFetch.length - 1) {
+            await randomDelay(3000, 7000);
+        }
+    }
+
+    if (failedCities.length > 0) {
+        console.warn(`⚠️ Damai: ${failedCities.length} cities were skipped due to errors: ${failedCities.join(', ')}`);
     }
 
     // DeepSeek Enhancement
@@ -549,6 +687,20 @@ async function runGlobalTask(onProgress: (msg: string, percent: number) => void)
     return concerts;
 }
 
+async function withTaskTimeout<T>(taskName: string, task: Promise<T>, timeoutMs: number): Promise<T> {
+    let timeoutHandle: NodeJS.Timeout;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+            reject(new Error(`${taskName} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+    });
+    try {
+        return await Promise.race([task, timeoutPromise]);
+    } finally {
+        clearTimeout(timeoutHandle!);
+    }
+}
+
 // --- Main Execution ---
 
 export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResult> {
@@ -590,11 +742,41 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         // 3. Launch Parallel Tasks
         console.log('⚡ Launching tasks in parallel...');
         
-        const [damaiResult, mobileResult, globalResult] = await Promise.all([
-            runDamaiTask((msg, p) => updateProgress('damai', p, msg)),
-            runMobileTask((msg, p) => updateProgress('mobile', p, msg)),
-            runGlobalTask((msg, p) => updateProgress('global', p, msg))
+        const settledResults = await Promise.allSettled([
+            withTaskTimeout('Damai task', runDamaiTask((msg, p) => updateProgress('damai', p, msg)), TASK_TIMEOUT_MS),
+            withTaskTimeout('MoreTickets mobile task', runMobileTask((msg, p) => updateProgress('mobile', p, msg)), TASK_TIMEOUT_MS),
+            withTaskTimeout('MoreTickets global task', runGlobalTask((msg, p) => updateProgress('global', p, msg)), TASK_TIMEOUT_MS)
         ]);
+
+        const damaiResult = settledResults[0].status === 'fulfilled' ? settledResults[0].value : [];
+        const mobileResult = settledResults[1].status === 'fulfilled' ? settledResults[1].value : [];
+        const globalResult = settledResults[2].status === 'fulfilled' ? settledResults[2].value : [];
+
+        const timedOutSources: string[] = [];
+        const failedSources: string[] = [];
+
+        const taskMeta = [
+            { name: '大麦网', result: settledResults[0] },
+            { name: '摩天轮(移动)', result: settledResults[1] },
+            { name: '摩天轮(全球)', result: settledResults[2] },
+        ];
+
+        for (const { name, result } of taskMeta) {
+            if (result.status === 'rejected') {
+                const msg = result.reason?.message || '';
+                if (msg.includes('timed out')) {
+                    timedOutSources.push(name);
+                    console.error(`⏱️ ${name} timed out`);
+                } else {
+                    failedSources.push(name);
+                    console.error(`❌ ${name} failed:`, msg);
+                }
+            }
+        }
+
+        if (!damaiResult.length && !mobileResult.length && !globalResult.length) {
+            throw new Error('All data sources failed or timed out.');
+        }
 
         // 4. Merge Results (Priority: Damai > Mobile > Global)
         console.log('🔄 Merging results...');
@@ -617,7 +799,19 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
         console.log(`🎉 Data saved to storage`);
         if (onProgress) onProgress('Sync complete!', 100);
 
-        return { success: true, totalNew: mergedConcerts.length - existingConcerts.length, totalCombined: mergedConcerts.length };
+        const parts: string[] = [];
+        if (timedOutSources.length) parts.push(`超时: ${timedOutSources.join('、')}`);
+        if (failedSources.length) parts.push(`失败: ${failedSources.join('、')}`);
+        const summaryMsg = parts.length ? parts.join(' | ') : undefined;
+
+        return {
+            success: true,
+            totalNew: mergedConcerts.length - existingConcerts.length,
+            totalCombined: mergedConcerts.length,
+            message: summaryMsg,
+            timedOutSources,
+            failedSources,
+        };
 
     } catch (err: any) {
         console.error('❌ Fatal Error in Parallel Sync:', err);

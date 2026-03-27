@@ -15,6 +15,8 @@ export interface SyncStatus {
     totalNew: number;
     totalCombined: number;
     message?: string;
+    timedOutSources?: string[];
+    failedSources?: string[];
   };
 }
 
@@ -63,16 +65,30 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         
         // Handle transitions
         if (prevStatusRef.current === 'running' && data.status === 'completed') {
-           toast.success("同步完成", {
-             description: data.message,
-             duration: Infinity,
-             action: {
-               label: "关闭",
-               onClick: () => console.log("Toast dismissed"),
-             },
-           });
-           // Trigger page refresh to show new data? 
-           // Optional: emit event or just let user navigate
+          const result = data.result;
+          const totalNew = result?.totalNew ?? 0;
+          const timedOut = result?.timedOutSources ?? [];
+          const failed = result?.failedSources ?? [];
+
+          const descParts: string[] = [`共 ${result?.totalCombined ?? 0} 场，新增 ${totalNew} 场`];
+          if (timedOut.length) descParts.push(`⏱️ 超时: ${timedOut.join('、')}`);
+          if (failed.length) descParts.push(`❌ 失败: ${failed.join('、')}`);
+
+          const hasIssues = timedOut.length > 0 || failed.length > 0;
+
+          if (hasIssues) {
+            toast.warning("同步完成（部分来源异常）", {
+              description: descParts.join('\n'),
+              duration: Infinity,
+              action: { label: "关闭", onClick: () => {} },
+            });
+          } else {
+            toast.success("同步完成", {
+              description: descParts.join('\n'),
+              duration: Infinity,
+              action: { label: "关闭", onClick: () => {} },
+            });
+          }
         }
         
         if (prevStatusRef.current === 'running' && data.status === 'error') {

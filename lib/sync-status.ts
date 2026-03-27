@@ -16,6 +16,8 @@ export interface SyncStatus {
     totalNew: number;
     totalCombined: number;
     message?: string;
+    timedOutSources?: string[];
+    failedSources?: string[];
   };
 }
 
