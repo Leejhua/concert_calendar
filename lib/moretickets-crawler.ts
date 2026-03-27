@@ -35,9 +35,16 @@ interface City {
     cityName: string;
 }
 
+const REQUEST_TIMEOUT_MS = 12000;
+const REQUEST_MAX_RETRY = 3;
+
 // --- Helper Functions ---
 
-function makeRequest(path: string, method: 'GET' | 'POST', data: any = null): Promise<any> {
+function getBackoffMs(retryCount: number): number {
+    return Math.min(800 * Math.pow(2, retryCount), 6000) + Math.floor(Math.random() * 400);
+}
+
+function makeRequest(path: string, method: 'GET' | 'POST', data: any = null, retryCount = 0): Promise<any> {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'm3.tking.cn',
@@ -49,7 +56,25 @@ function makeRequest(path: string, method: 'GET' | 'POST', data: any = null): Pr
             }
         };
 
+        const retryWithBackoff = (reason: string) => {
+            if (retryCount >= REQUEST_MAX_RETRY) {
+                reject(new Error(`[MoreTickets] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
+                return;
+            }
+            const nextAttempt = retryCount + 1;
+            const waitMs = getBackoffMs(retryCount);
+            console.warn(`[MoreTickets] ${reason}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
+            setTimeout(() => {
+                resolve(makeRequest(path, method, data, nextAttempt));
+            }, waitMs);
+        };
+
         const req = https.request(options, (res) => {
+            const statusCode = res.statusCode || 0;
+            if (statusCode >= 500) {
+                retryWithBackoff(`HTTP ${statusCode}`);
+                return;
+            }
             const chunks: Buffer[] = [];
             res.on('data', chunk => chunks.push(chunk));
             res.on('end', () => {
@@ -58,12 +83,15 @@ function makeRequest(path: string, method: 'GET' | 'POST', data: any = null): Pr
                     const json = JSON.parse(body);
                     resolve(json);
                 } catch (e) {
-                    reject(new Error(`Failed to parse response: ${body.substring(0, 100)}...`));
+                    retryWithBackoff(`Failed to parse response: ${body.substring(0, 100)}...`);
                 }
             });
         });
 
-        req.on('error', reject);
+        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+            req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+        });
+        req.on('error', (err: any) => retryWithBackoff(err.message || 'Network error'));
 
         if (data) {
             req.write(JSON.stringify(data));
