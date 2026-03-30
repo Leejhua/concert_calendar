@@ -204,8 +204,14 @@ export async function fetchInitialToken(): Promise<void> {
     });
 }
 
-export function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0): Promise<any> {
+export function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0, cancelled?: { value: boolean }): Promise<any> {
     return new Promise((resolve, reject) => {
+        // Check cancellation before even starting
+        if (cancelled?.value) {
+            reject(new Error('cancelled'));
+            return;
+        }
+
         const token = DAMAI_CONFIG.tokenWithTime ? DAMAI_CONFIG.tokenWithTime.split('_')[0] : '';
         const t = Date.now();
         const dataStr = JSON.stringify(dataObj);
@@ -249,10 +255,14 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
             const waitMs = getBackoffMs(retryCount);
             const runRetry = async () => {
                 try {
+                    if (cancelled?.value) {
+                        reject(new Error('cancelled'));
+                        return;
+                    }
                     if (refreshToken) {
                         await fetchInitialToken();
                     }
-                    resolve(makeRequest(api, dataObj, callbackName, nextAttempt));
+                    resolve(makeRequest(api, dataObj, callbackName, nextAttempt, cancelled));
                 } catch (err: any) {
                     reject(new Error(`[${api}] retry preparation failed: ${err.message}`));
                 }
@@ -333,6 +343,10 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
             req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
         });
         req.on('error', (e: any) => {
+            if (cancelled?.value) {
+                reject(new Error('cancelled'));
+                return;
+            }
             retryWithBackoff(e.message || 'Network error');
         });
         req.end();
@@ -612,7 +626,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                 const res = await makeRequest('mtop.damai.mec.aristotle.get', {
                     args: JSON.stringify(args), patternName: "category_solo", patternVersion: "4.2",
                     platform: "8", comboChannel: "2", dmChannel: "damai@damaih5_h5"
-                });
+                }, undefined, 0, cancelled);
                 if (cancelled.value) break;
 
                 if (res.ret && res.ret[0].startsWith('SUCCESS')) {
@@ -655,7 +669,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                     if (cancelled.value) break;
                 }
             } catch (err: any) {
-                if (cancelled.value) break;
+                if (cancelled.value || err.message === 'cancelled') break;
                 cityErrorCount++;
                 console.error(`Damai ${city.cityName} page ${page}: ${err.message}`);
                 if (cityErrorCount >= 3) break;
