@@ -577,18 +577,24 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
     const citiesToFetch = uniqueCities;
     const failedCities: string[] = [];
 
-    // Per-city timeout: 90s. If a city hangs (e.g. risk control infinite retry), skip it.
+    // Per-city timeout: 90s.
+    // We use a shared `cancelled` flag because Promise.race alone cannot interrupt
+    // an async function that is already awaiting inside — the flag lets fetchCity
+    // bail out cooperatively after each await point.
     const CITY_TIMEOUT_MS = 90 * 1000;
 
-    async function fetchCity(city: HotCity, index: number): Promise<Concert[]> {
+    async function fetchCity(city: HotCity, index: number, cancelled: { value: boolean }): Promise<Concert[]> {
         const cityResults: Concert[] = [];
         const fetchedIds = new Set<string>();
         let cityErrorCount = 0;
         let consecutiveEmptyPages = 0;
 
         for (let page = 1; page <= 50; page++) {
+            if (cancelled.value) break;
+
             const baseDelay = page <= 3 ? 1500 : 2500;
             await randomDelay(baseDelay, baseDelay + 2000);
+            if (cancelled.value) break;
 
             const cityStartPercent = 5 + Math.floor((index / citiesToFetch.length) * 85);
             const citySpanPercent = Math.max(1, Math.floor(85 / citiesToFetch.length));
@@ -607,6 +613,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                     args: JSON.stringify(args), patternName: "category_solo", patternVersion: "4.2",
                     platform: "8", comboChannel: "2", dmChannel: "damai@damaih5_h5"
                 });
+                if (cancelled.value) break;
 
                 if (res.ret && res.ret[0].startsWith('SUCCESS')) {
                     const items = parseConcertNodes(res.data?.nodes, city.cityName);
@@ -637,6 +644,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                     if (isRiskControl) {
                         console.warn(`⚠️ Risk control on ${city.cityName}, backing off 15-30s...`);
                         await randomDelay(15000, 30000);
+                        if (cancelled.value) break;
                     }
 
                     if (cityErrorCount >= 3) {
@@ -644,14 +652,15 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                         break;
                     }
                     await delay(getBackoffMs(cityErrorCount));
+                    if (cancelled.value) break;
                 }
             } catch (err: any) {
+                if (cancelled.value) break;
                 cityErrorCount++;
                 console.error(`Damai ${city.cityName} page ${page}: ${err.message}`);
-                if (cityErrorCount >= 3) {
-                    break;
-                }
+                if (cityErrorCount >= 3) break;
                 await delay(getBackoffMs(cityErrorCount));
+                if (cancelled.value) break;
             }
         }
 
@@ -662,24 +671,24 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
         const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85);
         if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
 
-        let timeoutHandle!: NodeJS.Timeout;
-        const timeoutPromise = new Promise<Concert[]>((_, reject) => {
-            timeoutHandle = setTimeout(() => reject(new Error('city_timeout')), CITY_TIMEOUT_MS);
-        });
+        const cancelled = { value: false };
+        const timeoutHandle = setTimeout(() => {
+            cancelled.value = true;
+            console.warn(`⏱️ Damai ${city.cityName} cancelled after ${CITY_TIMEOUT_MS / 1000}s timeout.`);
+        }, CITY_TIMEOUT_MS);
 
         try {
-            const cityData = await Promise.race([fetchCity(city, index), timeoutPromise]);
+            const cityData = await fetchCity(city, index, cancelled);
             clearTimeout(timeoutHandle);
-            allConcerts.push(...cityData);
-        } catch (err: any) {
-            clearTimeout(timeoutHandle);
-            if (err.message === 'city_timeout') {
-                console.warn(`⏱️ Damai ${city.cityName} timed out after ${CITY_TIMEOUT_MS / 1000}s, skipping.`);
+            if (cancelled.value) {
                 failedCities.push(`${city.cityName}(超时)`);
             } else {
-                console.warn(`Damai ${city.cityName} skipped: ${err.message}`);
-                failedCities.push(city.cityName);
+                allConcerts.push(...cityData);
             }
+        } catch (err: any) {
+            clearTimeout(timeoutHandle);
+            console.warn(`Damai ${city.cityName} skipped: ${err.message}`);
+            failedCities.push(city.cityName);
         }
 
         // Inter-city delay
