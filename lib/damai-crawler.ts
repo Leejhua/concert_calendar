@@ -575,19 +575,18 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
 
     let allConcerts: Concert[] = [];
     const citiesToFetch = uniqueCities;
-    // Track failed cities for logging (don't block the whole sync)
     const failedCities: string[] = [];
 
-    for (const [index, city] of citiesToFetch.entries()) {
-        const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85); // 5% -> 90%
-        if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
-        
-        const fetchedIdsInThisCity = new Set<string>();
+    // Per-city timeout: 90s. If a city hangs (e.g. risk control infinite retry), skip it.
+    const CITY_TIMEOUT_MS = 90 * 1000;
+
+    async function fetchCity(city: HotCity, index: number): Promise<Concert[]> {
+        const cityResults: Concert[] = [];
+        const fetchedIds = new Set<string>();
         let cityErrorCount = 0;
         let consecutiveEmptyPages = 0;
 
         for (let page = 1; page <= 50; page++) {
-            // Randomized delay: 1.5-4s between pages (longer for later pages to avoid rate limits)
             const baseDelay = page <= 3 ? 1500 : 2500;
             await randomDelay(baseDelay, baseDelay + 2000);
 
@@ -602,7 +601,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                 platform: "8", comboChannel: "2", dmChannel: "damai@damaih5_h5",
                 pageIndex: String(page), pageSize: "20"
             };
-            
+
             try {
                 const res = await makeRequest('mtop.damai.mec.aristotle.get', {
                     args: JSON.stringify(args), patternName: "category_solo", patternVersion: "4.2",
@@ -611,20 +610,20 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
 
                 if (res.ret && res.ret[0].startsWith('SUCCESS')) {
                     const items = parseConcertNodes(res.data?.nodes, city.cityName);
-                    cityErrorCount = 0; // reset on success
+                    cityErrorCount = 0;
 
                     if (items.length === 0) {
                         consecutiveEmptyPages++;
-                        if (consecutiveEmptyPages >= 2) break; // 2 empty pages = done
+                        if (consecutiveEmptyPages >= 2) break;
                         continue;
                     }
                     consecutiveEmptyPages = 0;
 
                     let newItemsCount = 0;
                     for (const item of items) {
-                        if (!fetchedIdsInThisCity.has(item.id)) {
-                            fetchedIdsInThisCity.add(item.id);
-                            allConcerts.push(item);
+                        if (!fetchedIds.has(item.id)) {
+                            fetchedIds.add(item.id);
+                            cityResults.push(item);
                             newItemsCount++;
                         }
                     }
@@ -634,16 +633,14 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                     const retMsg = getPrimaryRetMessage(res) || 'Unknown ret';
                     console.warn(`Damai ${city.cityName} page ${page} non-success: ${retMsg}`);
 
-                    // If risk control detected, back off longer before retry
                     const isRiskControl = retMsg.includes('RGV587') || retMsg.includes('TRAFFIC_LIMIT') || retMsg.includes('ILLEGAL_ACCESS');
                     if (isRiskControl) {
-                        console.warn(`⚠️ Risk control detected for ${city.cityName}. Backing off 15-30s...`);
+                        console.warn(`⚠️ Risk control on ${city.cityName}, backing off 15-30s...`);
                         await randomDelay(15000, 30000);
                     }
 
                     if (cityErrorCount >= 3) {
                         console.warn(`Damai ${city.cityName} reached error threshold, skipping.`);
-                        failedCities.push(city.cityName);
                         break;
                     }
                     await delay(getBackoffMs(cityErrorCount));
@@ -652,22 +649,47 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                 cityErrorCount++;
                 console.error(`Damai ${city.cityName} page ${page}: ${err.message}`);
                 if (cityErrorCount >= 3) {
-                    console.warn(`Damai ${city.cityName} skipped after repeated errors.`);
-                    failedCities.push(city.cityName);
                     break;
                 }
                 await delay(getBackoffMs(cityErrorCount));
             }
         }
 
-        // Inter-city delay: 3-7s to avoid triggering rate limits across cities
+        return cityResults;
+    }
+
+    for (const [index, city] of citiesToFetch.entries()) {
+        const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85);
+        if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
+
+        let timeoutHandle!: NodeJS.Timeout;
+        const timeoutPromise = new Promise<Concert[]>((_, reject) => {
+            timeoutHandle = setTimeout(() => reject(new Error('city_timeout')), CITY_TIMEOUT_MS);
+        });
+
+        try {
+            const cityData = await Promise.race([fetchCity(city, index), timeoutPromise]);
+            clearTimeout(timeoutHandle);
+            allConcerts.push(...cityData);
+        } catch (err: any) {
+            clearTimeout(timeoutHandle);
+            if (err.message === 'city_timeout') {
+                console.warn(`⏱️ Damai ${city.cityName} timed out after ${CITY_TIMEOUT_MS / 1000}s, skipping.`);
+                failedCities.push(`${city.cityName}(超时)`);
+            } else {
+                console.warn(`Damai ${city.cityName} skipped: ${err.message}`);
+                failedCities.push(city.cityName);
+            }
+        }
+
+        // Inter-city delay
         if (index < citiesToFetch.length - 1) {
             await randomDelay(3000, 7000);
         }
     }
 
     if (failedCities.length > 0) {
-        console.warn(`⚠️ Damai: ${failedCities.length} cities were skipped due to errors: ${failedCities.join(', ')}`);
+        console.warn(`⚠️ Damai: ${failedCities.length} cities skipped: ${failedCities.join(', ')}`);
     }
 
     // DeepSeek Enhancement
