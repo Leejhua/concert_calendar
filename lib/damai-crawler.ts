@@ -406,7 +406,19 @@ export async function extractArtistsWithDeepSeek(concerts: Concert[], apiKey: st
         return concerts;
     }
 
-    console.log(`   📝 Sending ${titlesToProcess.length} titles to DeepSeek...`);
+    console.log(`   📝 Sending ${titlesToProcess.length} titles to DeepSeek (in batches)...`);
+
+    // Process in batches of 50 to avoid oversized prompts
+    const BATCH_SIZE = 50;
+    const batches: string[][] = [];
+    for (let i = 0; i < titlesToProcess.length; i += BATCH_SIZE) {
+        batches.push(titlesToProcess.slice(i, i + BATCH_SIZE));
+    }
+
+    const allResults: Record<string, any> = {};
+
+    for (const [batchIdx, batch] of batches.entries()) {
+        console.log(`   🤖 DeepSeek batch ${batchIdx + 1}/${batches.length} (${batch.length} titles)...`);
 
     const prompt = `
 You are a music data expert. Extract the main artist/performer from the following concert titles. 
@@ -422,33 +434,58 @@ Rules:
 4. Return JSON ONLY. No markdown.
 
 Titles:
-${JSON.stringify(titlesToProcess)}
+${JSON.stringify(batch)}
     `;
 
     try {
-        const response = await fetch('https://api.deepseek.com/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: [
-                    { role: 'system', content: 'You are a helpful assistant that extracts artist names and filters low-value events.' },
-                    { role: 'user', content: prompt }
-                ],
-                stream: false,
-                response_format: { type: 'json_object' }
-            })
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2 * 60 * 1000); // 2 min per batch
+
+        let response: Response;
+        try {
+            response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [
+                        { role: 'system', content: 'You are a helpful assistant that extracts artist names and filters low-value events.' },
+                        { role: 'user', content: prompt }
+                    ],
+                    stream: false,
+                    response_format: { type: 'json_object' }
+                }),
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
-            console.error(`DeepSeek API Failed: ${response.status}`);
-            return concerts;
+            console.error(`DeepSeek API Failed on batch ${batchIdx + 1}: ${response.status}`);
+            continue; // skip this batch, keep going
         }
 
         const data = await response.json();
         const content = data.choices[0].message.content;
-        let result: any = {};
-        try { result = JSON.parse(content); } catch (e) { return concerts; }
+        try {
+            const batchResult = JSON.parse(content);
+            Object.assign(allResults, batchResult);
+        } catch (e) {
+            console.error(`DeepSeek batch ${batchIdx + 1} parse error, skipping.`);
+        }
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.error(`DeepSeek batch ${batchIdx + 1} timed out after 2 minutes, skipping.`);
+        } else {
+            console.error(`DeepSeek batch ${batchIdx + 1} error:`, error);
+        }
+        // continue with next batch
+    }
+    }
+
+    // Apply results
+    const result = allResults;
 
         concertsToProcess.forEach(c => {
             const info = result[c.title];
@@ -470,10 +507,6 @@ ${JSON.stringify(titlesToProcess)}
             }
         });
         return concerts;
-    } catch (error) {
-        console.error('DeepSeek Request Error:', error);
-        return concerts;
-    }
 }
 
 export async function getTargetCityList(): Promise<string[]> {
