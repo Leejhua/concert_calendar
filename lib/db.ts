@@ -96,14 +96,21 @@ export async function saveConcertsToStorage(concerts: Concert[]): Promise<void> 
 
     if (concerts.length === 0) return;
 
+    // Deduplicate by id within the input (keep last occurrence = freshest)
+    const deduped = new Map<string, Concert>();
+    for (const c of concerts) {
+        deduped.set(c.id, c);
+    }
+    const uniqueConcerts = Array.from(deduped.values());
+
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         // Batch upsert in chunks of 100
         const CHUNK_SIZE = 100;
-        for (let i = 0; i < concerts.length; i += CHUNK_SIZE) {
-            const chunk = concerts.slice(i, i + CHUNK_SIZE);
+        for (let i = 0; i < uniqueConcerts.length; i += CHUNK_SIZE) {
+            const chunk = uniqueConcerts.slice(i, i + CHUNK_SIZE);
 
             const values: any[] = [];
             const placeholders: string[] = [];
