@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveConcertsToStorage, getAllConcertsFromStorage } from '@/lib/db';
+import { saveConcertsToStorage, getAllConcertsFromStorage, clearAllConcerts, getConcertCount } from '@/lib/db';
 import { mergeConcertLists } from '@/lib/deduplication';
 import { updateSyncStatus } from '@/lib/sync-status';
 import { Concert } from '@/lib/damai-crawler';
@@ -60,15 +60,16 @@ export async function POST(request: NextRequest) {
         let existingCount = 0;
 
         if (mode === 'replace') {
+            await clearAllConcerts();
+            await saveConcertsToStorage(concerts);
             finalConcerts = concerts;
         } else {
             // merge mode: deduplicate with existing data
             const existing = await getAllConcertsFromStorage();
             existingCount = existing.length;
             finalConcerts = mergeConcertLists(existing, concerts);
+            await saveConcertsToStorage(finalConcerts);
         }
-
-        await saveConcertsToStorage(finalConcerts);
 
         // Update sync status so the frontend knows data was refreshed
         updateSyncStatus({
