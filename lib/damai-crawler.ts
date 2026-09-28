@@ -1,11 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const */
 import https from 'https';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fetchAllMoreTicketsConcerts } from './moretickets-crawler';
 import { fetchMoreTicketsGlobalConcerts } from './moretickets-global-crawler';
+import { splitArtistNames } from './concert-identity';
+import { extractConcertIdentityWithAI } from './concert-identity-ai';
 import { mergeConcertLists } from './deduplication';
 import { saveConcertsToStorage, getAllConcertsFromStorage } from './db';
+// Proxy support: side-effect import configures the global fetch dispatcher; the
+// per-request agent is injected into every `https.request` call below.
+import { getProxyAgent } from './proxy-agent';
+// Proxy pool: node management for risk-control resilience
+import { handleNodeFailure, markNodeCooldown, getCurrentNode } from './proxy-pool';
+// Checkpoint persistence for resumable crawls
+import { getCompletedCities, updateSourceProgress, clearProgress } from './crawl-progress';
+// Proxy-aware retry logic
+import { withProxyRetry } from './proxy-retry';
 
 // --- Type Definitions ---
 export interface Concert {
@@ -19,9 +31,29 @@ export interface Concert {
     status: string;
     category?: string;
     artist?: string;
+    rawTitle?: string;
+    rawArtistTag?: string;
+    artistPrimary?: string;
+    artistAll?: string[];
+    eventType?: 'solo' | 'multi_artist' | 'tribute' | 'fan_meeting' | 'festival' | 'other' | 'unknown';
+    artistConfidence?: number | null;
+    artistSource?: 'official_tag' | 'rule' | 'llm' | 'manual' | 'legacy' | 'unknown';
     is_tribute?: boolean; // Whether it's a tribute/imitation concert
     is_famous?: boolean;  // Whether the artist is well-known
     updatedAt: number;
+    source?: 'damai' | 'moretickets' | 'moretickets-global';
+    sourceUrl?: string;
+    eventDate?: string | null;
+    eventTime?: string | null;
+    sortAt?: string | null;
+    opportunityStatus?: 'new' | 'watching' | 'qualified' | 'ignored' | 'converted';
+    opportunityScore?: number;
+    opportunityScoreBreakdown?: Array<{ key: string; label: string; delta: number; matched: boolean }>;
+    lastSeenAt?: number;
+    projectId?: string | null;
+    notes?: string;
+    normalizedCity?: string;
+    normalizedVenue?: string;
 }
 
 interface HotCity {
@@ -50,9 +82,6 @@ export interface SyncResult {
 
 // --- Configuration ---
 const DATA_DIR = path.join(process.cwd(), 'data');
-
-// Keywords that indicate a "low value" or "fake" concert
-const BLACKLIST_KEYWORDS = ['烛光', '致敬', '模仿', '重现', '同人', '纪念', '追忆', '作品音乐会', '见面会', '金曲', '情歌', '表白'];
 
 // Keywords that indicate a "fake" artist tag
 const INVALID_ARTIST_TAGS = ['演唱会', '榜', '热销', '上新', '优选', '折扣', '推荐', '必看', '演出', '麦', '歌手', '音乐会'];
@@ -91,7 +120,7 @@ let DAMAI_CONFIG: DamaiConfig = {
 
 const REQUEST_TIMEOUT_MS = 20000;
 const REQUEST_MAX_RETRY = 3;
-const TASK_TIMEOUT_MS = 30 * 60 * 1000;
+const TASK_TIMEOUT_MS = 60 * 60 * 1000;
 const RETRYABLE_RET_MARKERS = [
     'FAIL_SYS_TOKEN_EXPIRED',
     'FAIL_SYS_TOKEN_EMPTY',
@@ -102,20 +131,58 @@ const RETRYABLE_RET_MARKERS = [
     'FAIL_SYS_TRAFFIC_LIMIT'
 ];
 
-// --- Anti-Detection: Rotating User-Agents ---
-const USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1',
+// --- Anti-Detection: UA Pool (20 entries, city-bound) ---
+const UA_POOL = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPad; CPU OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.200 Mobile Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.102 Mobile Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.200 Mobile Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
 ];
 
+function hashCode(s: string): number {
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+        hash = ((hash << 5) - hash) + s.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash;
+}
+
+function getUAForCity(cityName: string): string {
+    return UA_POOL[Math.abs(hashCode(cityName)) % UA_POOL.length];
+}
+
+/** Fallback: random UA from the pool for non-city requests (handshake, city list). */
 function getRandomUA(): string {
-    return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+    return UA_POOL[Math.floor(Math.random() * UA_POOL.length)];
+}
+
+// --- Anti-Detection: Accept-Language randomization ---
+const ACCEPT_LANGUAGES = [
+    'zh-CN,zh;q=0.9,en;q=0.8',
+    'zh-CN,zh;q=0.9',
+    'zh-TW,zh;q=0.8,en;q=0.7',
+    'en-US,en;q=0.9,zh-CN;q=0.8',
+];
+
+function getRandomAcceptLanguage(): string {
+    return ACCEPT_LANGUAGES[Math.floor(Math.random() * ACCEPT_LANGUAGES.length)];
 }
 
 // --- Helpers ---
@@ -167,14 +234,16 @@ export async function fetchInitialToken(): Promise<void> {
             api: api, v: '1.2', type: 'json', dataType: 'json', data: dataStr
         });
 
-        const options = {
+        const options: https.RequestOptions = {
             hostname: 'mtop.damai.cn',
             path: `/h5/${api}/1.2/?${params.toString()}`,
             method: 'GET',
             headers: {
                 'accept': 'application/json',
                 'user-agent': getRandomUA(),
-            }
+            },
+            // Route through the configured HTTP proxy (null => default agent).
+            agent: getProxyAgent() ?? undefined,
         };
 
         const req = https.request(options, (res) => {
@@ -204,7 +273,20 @@ export async function fetchInitialToken(): Promise<void> {
     });
 }
 
-export function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0, cancelled?: { value: boolean }): Promise<any> {
+/**
+ * Make an HTTP request to the Damai MTOP API.
+ *
+ * The request is wrapped in two independent retry layers:
+ * 1. Proxy retry (via withProxyRetry): handles ECONNRESET/ECONNREFUSED/ETIMEDOUT
+ *    with up to 3 attempts and escalating delays.
+ * 2. API-level retry (via retryWithBackoff): handles HTTP 5xx, parse failures,
+ *    token expiry, and retryable `ret` messages with up to REQUEST_MAX_RETRY attempts.
+ *
+ * Proxy retry is exhausted first; only then does the error fall through to
+ * API-level retry. The two retry counters (proxyRetryCount inside withProxyRetry
+ * and retryCount for API retries) are independent.
+ */
+export function makeRequest(api: string, dataObj: any, callbackName?: string, retryCount = 0, cancelled?: { value: boolean }, cityName?: string): Promise<any> {
     return new Promise((resolve, reject) => {
         // Check cancellation before even starting
         if (cancelled?.value) {
@@ -233,19 +315,25 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
             params.delete('callback');
         }
 
-        const options = {
+        const options: https.RequestOptions = {
             hostname: 'mtop.damai.cn',
             path: `/h5/${api}/${params.get('v')}/?${params.toString()}`,
             method: 'GET',
             headers: {
                 'accept': '*/*',
-                'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'accept-language': getRandomAcceptLanguage(),
                 'cookie': DAMAI_CONFIG.cookie,
                 'referer': DAMAI_CONFIG.referer,
-                'user-agent': getRandomUA(),
-            }
+                'user-agent': cityName ? getUAForCity(cityName) : getRandomUA(),
+            },
+            // Route through the configured HTTP proxy (null => default agent).
+            agent: getProxyAgent() ?? undefined,
         };
 
+        /**
+         * API-level retry with exponential backoff.
+         * Called when proxy retry is exhausted or the error is not proxy-related.
+         */
         const retryWithBackoff = (reason: string, refreshToken = false) => {
             if (retryCount >= REQUEST_MAX_RETRY) {
                 reject(new Error(`[${api}] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
@@ -262,7 +350,7 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
                     if (refreshToken) {
                         await fetchInitialToken();
                     }
-                    resolve(makeRequest(api, dataObj, callbackName, nextAttempt, cancelled));
+                    resolve(makeRequest(api, dataObj, callbackName, nextAttempt, cancelled, cityName));
                 } catch (err: any) {
                     reject(new Error(`[${api}] retry preparation failed: ${err.message}`));
                 }
@@ -271,85 +359,112 @@ export function makeRequest(api: string, dataObj: any, callbackName?: string, re
             setTimeout(runRetry, waitMs);
         };
 
-        const req = https.request(options, (res) => {
-            const statusCode = res.statusCode || 0;
-            if (statusCode >= 500) {
-                retryWithBackoff(`HTTP ${statusCode}`);
-                return;
-            }
-
-            // Update cookies
-            const setCookie = res.headers['set-cookie'];
-            if (setCookie) {
-                const newCookies = setCookie.map(c => c.split(';')[0]).join('; ');
-                const tokenMatch = newCookies.match(/_m_h5_tk=([^;]+)/);
-                if (tokenMatch) {
-                    DAMAI_CONFIG.tokenWithTime = tokenMatch[1];
-                    DAMAI_CONFIG.cookie = newCookies; 
-                }
-            }
-
-            let chunks: Buffer[] = [];
-            res.on('data', (chunk) => chunks.push(chunk));
-            res.on('end', () => {
-                const body = Buffer.concat(chunks).toString();
-                let json: any = null;
-
-                // JSONP/JSON Parsing
-                if (callbackName && body.includes(callbackName + '(')) {
-                    try {
-                        const start = body.indexOf(callbackName + '(') + callbackName.length + 1;
-                        const end = body.lastIndexOf(')');
-                        json = JSON.parse(body.substring(start, end));
-                    } catch (e: any) {
-                        retryWithBackoff(`Failed to parse JSONP: ${e.message}`);
-                        return;
-                    }
-                } else {
-                    try {
-                        json = JSON.parse(body);
-                    } catch (e) {
-                        // Fallback for mtopjsonp
-                         if (body.trim().startsWith('mtopjsonp')) {
-                             const start = body.indexOf('(') + 1;
-                             const end = body.lastIndexOf(')');
-                             try { json = JSON.parse(body.substring(start, end)); } catch(err) {}
-                        }
-                    }
-                }
-
-                if (!json) {
-                    console.error('Raw response parsing failed:', body.substring(0, 200));
-                    retryWithBackoff('Failed to parse JSON response');
+        /**
+         * Inner HTTP request function — the raw https.request call.
+         * This is wrapped by withProxyRetry for proxy-level retry.
+         * On any error (network, HTTP, parse), it rejects so the caller
+         * can decide whether to proxy-retry or fall through to API retry.
+         */
+        const doHttpRequest = (): Promise<any> => {
+            return new Promise((innerResolve, innerReject) => {
+                if (cancelled?.value) {
+                    innerReject(new Error('cancelled'));
                     return;
                 }
 
-                const primaryRet = getPrimaryRetMessage(json);
-                if (primaryRet) {
-                    if (primaryRet.startsWith('FAIL_SYS_TOKEN_EXPIRED') || primaryRet.startsWith('FAIL_SYS_TOKEN_EMPTY')) {
-                        retryWithBackoff(primaryRet, true);
+                const req = https.request(options, (res) => {
+                    const statusCode = res.statusCode || 0;
+                    if (statusCode >= 500) {
+                        innerReject(new Error(`HTTP ${statusCode}`));
                         return;
                     }
-                    if (isRetryableRet(primaryRet)) {
-                        retryWithBackoff(primaryRet);
-                        return;
-                    }
-                }
-                resolve(json);
-            });
-        });
 
-        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
-            req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
-        });
-        req.on('error', (e: any) => {
-            if (cancelled?.value) {
-                reject(new Error('cancelled'));
-                return;
-            }
-            retryWithBackoff(e.message || 'Network error');
-        });
-        req.end();
+                    // Update cookies
+                    const setCookie = res.headers['set-cookie'];
+                    if (setCookie) {
+                        const newCookies = setCookie.map(c => c.split(';')[0]).join('; ');
+                        const tokenMatch = newCookies.match(/_m_h5_tk=([^;]+)/);
+                        if (tokenMatch) {
+                            DAMAI_CONFIG.tokenWithTime = tokenMatch[1];
+                            DAMAI_CONFIG.cookie = newCookies; 
+                        }
+                    }
+
+                    let chunks: Buffer[] = [];
+                    res.on('data', (chunk) => chunks.push(chunk));
+                    res.on('end', () => {
+                        const body = Buffer.concat(chunks).toString();
+                        let json: any = null;
+
+                        // JSONP/JSON Parsing
+                        if (callbackName && body.includes(callbackName + '(')) {
+                            try {
+                                const start = body.indexOf(callbackName + '(') + callbackName.length + 1;
+                                const end = body.lastIndexOf(')');
+                                json = JSON.parse(body.substring(start, end));
+                            } catch (e: any) {
+                                innerReject(new Error(`Failed to parse JSONP: ${e.message}`));
+                                return;
+                            }
+                        } else {
+                            try {
+                                json = JSON.parse(body);
+                            } catch (e) {
+                                // Fallback for mtopjsonp
+                                 if (body.trim().startsWith('mtopjsonp')) {
+                                     const start = body.indexOf('(') + 1;
+                                     const end = body.lastIndexOf(')');
+                                     try { json = JSON.parse(body.substring(start, end)); } catch(err) {}
+                                }
+                            }
+                        }
+
+                        if (!json) {
+                            console.error('Raw response parsing failed:', body.substring(0, 200));
+                            innerReject(new Error('Failed to parse JSON response'));
+                            return;
+                        }
+
+                        const primaryRet = getPrimaryRetMessage(json);
+                        if (primaryRet && !primaryRet.startsWith('SUCCESS')) {
+                            innerReject(new Error(primaryRet));
+                            return;
+                        }
+                        innerResolve(json);
+                    });
+                });
+
+                req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+                    req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+                });
+                req.on('error', (e: any) => {
+                    // Reject so withProxyRetry can catch proxy errors for retry,
+                    // or fall through to API-level retry for non-proxy errors.
+                    innerReject(e);
+                });
+                req.end();
+            });
+        };
+
+        // Wrap the HTTP request in proxy-aware retry.
+        // Proxy errors (ECONNRESET/ECONNREFUSED/ETIMEDOUT) are retried up to 3 times.
+        // Non-proxy errors and exhausted proxy retries fall through to API-level retry.
+        withProxyRetry(() => doHttpRequest())
+            .then(json => resolve(json))
+            .catch((err: any) => {
+                if (cancelled?.value || err.message === 'cancelled') {
+                    reject(new Error('cancelled'));
+                    return;
+                }
+                const msg: string = err.message || 'Network error';
+                if (msg.startsWith('FAIL_SYS_TOKEN_EXPIRED') || msg.startsWith('FAIL_SYS_TOKEN_EMPTY')) {
+                    retryWithBackoff(msg, true);
+                } else if (isRetryableRet(msg)) {
+                    retryWithBackoff(msg);
+                } else {
+                    retryWithBackoff(msg);
+                }
+            });
     });
 }
 
@@ -366,6 +481,7 @@ export function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
             results.push({
                 id: item.id || item.itemId || '',
                 title: item.name || item.showTag || item.projectName || '',
+                rawTitle: item.name || item.showTag || item.projectName || '',
                 image: item.verticalPic || '',
                 date: item.showTime || '',
                 city: (item.cityName || '').trim(), 
@@ -374,6 +490,11 @@ export function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
                 status: item.showStatus?.desc || 'Unknown',
                 category: item.topRight?.tag || 'Concert',
                 artist: isValidTag ? showTag : '',
+                rawArtistTag: isValidTag ? showTag : '',
+                artistPrimary: isValidTag ? splitArtistNames(showTag)[0] || '' : '',
+                artistAll: isValidTag ? splitArtistNames(showTag) : [],
+                artistSource: isValidTag ? 'official_tag' : 'unknown',
+                artistConfidence: isValidTag ? 0.95 : 0,
                 is_famous: isValidTag,
                 updatedAt: Date.now()
             });
@@ -385,142 +506,18 @@ export function parseConcertNodes(nodes: any[], cityName: string): Concert[] {
     return results;
 }
 
-// --- DeepSeek Extraction ---
+// --- AI Identity Extraction ---
 
-export async function extractArtistsWithDeepSeek(concerts: Concert[], apiKey: string): Promise<Concert[]> {
-    if (!concerts.length) return concerts;
-    console.log(`🤖 DeepSeek: Processing ${concerts.length} items...`);
+export async function extractArtistsWithDeepSeek(
+    concerts: Concert[],
+    apiKey: string = '',
+    source?: Concert['source']
+): Promise<Concert[]> {
+    return extractConcertIdentityWithAI(concerts, { apiKey, source });
+}
 
-    const concertsToProcess: Concert[] = [];
-    const titlesToProcess: string[] = [];
-
-    concerts.forEach(c => {
-        const isBlacklisted = BLACKLIST_KEYWORDS.some(keyword => c.title.includes(keyword));
-        if (isBlacklisted) {
-            c.artist = 'Unknown';
-            c.is_tribute = true;
-        } else {
-            let hasValidOfficialArtist = false;
-            if (c.artist && c.artist !== '群星' && c.artist !== 'Unknown') {
-                const isArtistBlacklisted = BLACKLIST_KEYWORDS.some(keyword => c.artist!.includes(keyword));
-                if (!isArtistBlacklisted) hasValidOfficialArtist = true;
-            }
-
-            if (hasValidOfficialArtist) {
-                if (!c.title.startsWith('【')) c.title = `【${c.artist}】${c.title}`;
-            } else {
-                concertsToProcess.push(c);
-                titlesToProcess.push(c.title);
-            }
-        }
-    });
-
-    if (titlesToProcess.length === 0) {
-        console.log('✨ All items were handled by blacklist or official tags. Skipping AI.');
-        return concerts;
-    }
-
-    console.log(`   📝 Sending ${titlesToProcess.length} titles to DeepSeek (in batches)...`);
-
-    // Process in batches of 50 to avoid oversized prompts
-    const BATCH_SIZE = 50;
-    const batches: string[][] = [];
-    for (let i = 0; i < titlesToProcess.length; i += BATCH_SIZE) {
-        batches.push(titlesToProcess.slice(i, i + BATCH_SIZE));
-    }
-
-    const allResults: Record<string, any> = {};
-
-    for (const [batchIdx, batch] of batches.entries()) {
-        console.log(`   🤖 DeepSeek batch ${batchIdx + 1}/${batches.length} (${batch.length} titles)...`);
-
-    const prompt = `
-You are a music data expert. Extract the main artist/performer from the following concert titles. 
-Return ONLY a valid JSON object where keys are the EXACT titles provided and values are objects with:
-- "artist": string (the artist name, or "Unknown")
-- "is_tribute": boolean (true if it's a tribute, memorial, imitation, "Candlelight", or fan meeting/Gala where the original artist is NOT performing)
-- "is_famous": boolean (true if the artist is a well-known professional singer/band; false for amateur, obscure, local performers, or non-concert events like fan meetings)
-
-Rules:
-1. STRICTLY identify tribute acts and non-concert events (e.g., "致敬Beyond", "纪念张国荣", "粉丝见面会", "金曲专场"). For these, set "is_tribute": true and "artist": "Unknown".
-2. If it's a music festival or multi-artist event, set "artist": "群星".
-3. If the performer is not a famous commercial artist (e.g., obscure local bands, university choirs), set "is_famous": false.
-4. Return JSON ONLY. No markdown.
-
-Titles:
-${JSON.stringify(batch)}
-    `;
-
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2 * 60 * 1000); // 2 min per batch
-
-        let response: Response;
-        try {
-            response = await fetch('https://api.deepseek.com/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    model: 'deepseek-chat',
-                    messages: [
-                        { role: 'system', content: 'You are a helpful assistant that extracts artist names and filters low-value events.' },
-                        { role: 'user', content: prompt }
-                    ],
-                    stream: false,
-                    response_format: { type: 'json_object' }
-                }),
-                signal: controller.signal,
-            });
-        } finally {
-            clearTimeout(timeoutId);
-        }
-
-        if (!response.ok) {
-            console.error(`DeepSeek API Failed on batch ${batchIdx + 1}: ${response.status}`);
-            continue; // skip this batch, keep going
-        }
-
-        const data = await response.json();
-        const content = data.choices[0].message.content;
-        try {
-            const batchResult = JSON.parse(content);
-            Object.assign(allResults, batchResult);
-        } catch (e) {
-            console.error(`DeepSeek batch ${batchIdx + 1} parse error, skipping.`);
-        }
-    } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.error(`DeepSeek batch ${batchIdx + 1} timed out after 2 minutes, skipping.`);
-        } else {
-            console.error(`DeepSeek batch ${batchIdx + 1} error:`, error);
-        }
-        // continue with next batch
-    }
-    }
-
-    // Apply results
-    const result = allResults;
-
-        concertsToProcess.forEach(c => {
-            const info = result[c.title];
-            if (info) {
-                if (typeof info === 'string') {
-                    c.artist = info; c.is_tribute = false; c.is_famous = true;
-                } else {
-                    c.artist = info.artist || 'Unknown';
-                    c.is_tribute = info.is_tribute || false;
-                    c.is_famous = info.is_famous !== undefined ? info.is_famous : true;
-                }
-
-                if (c.is_tribute || !c.is_famous) c.artist = 'Unknown';
-                if (!c.is_famous) c.artist = 'Unknown';
-
-                if (c.artist !== 'Unknown' && !c.title.startsWith('【')) {
-                    c.title = `【${c.artist}】${c.title}`;
-                }
-            }
-        });
-        return concerts;
+function getConfiguredAiApiKey(): string {
+    return DAMAI_CONFIG.deepseekApiKey || process.env.AI_API_KEY || process.env.DEEPSEEK_API_KEY || '';
 }
 
 export async function getTargetCityList(): Promise<string[]> {
@@ -555,6 +552,10 @@ export async function getTargetCityList(): Promise<string[]> {
 
 // --- Independent Task Runners ---
 
+// Batch concurrency constants
+const CITY_BATCH_SIZE = 8;
+const INTER_BATCH_DELAY_MS = 10000;
+
 async function runDamaiTask(onProgress: (msg: string, percent: number) => void): Promise<Concert[]> {
     console.log('1. Fetching Damai City List...');
     if (onProgress) onProgress('Fetching Damai City List...', 0);
@@ -579,16 +580,31 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
     allCities.forEach(c => uniqueCitiesMap.set(c.cityId, c));
     const uniqueCities = Array.from(uniqueCitiesMap.values()).filter(c => !CITY_BLACKLIST.some(b => c.cityName.includes(b)));
 
-    console.log(`✅ Final Cities to Fetch: ${uniqueCities.length}`);
+    console.log(`✅ Total cities available: ${uniqueCities.length}`);
     if (uniqueCities.length === 0) {
         console.warn('No cities found for Damai.');
         return [];
     }
 
-    if (onProgress) onProgress(`Found ${uniqueCities.length} cities. Starting Damai crawl...`, 5);
+    // --- Checkpoint: filter out already-completed cities ---
+    const completedCities = await getCompletedCities('damai');
+    const citiesToFetch = completedCities.length > 0
+        ? uniqueCities.filter(c => !completedCities.includes(c.cityName))
+        : uniqueCities;
+
+    if (completedCities.length > 0) {
+        console.log(`📋 Resuming Damai from checkpoint: ${completedCities.length} cities done, ${citiesToFetch.length} remaining`);
+    }
+
+    if (citiesToFetch.length === 0) {
+        console.log('✅ All cities already completed. Skipping Damai crawl.');
+        if (onProgress) onProgress('Damai task complete (all cached)', 100);
+        return [];
+    }
+
+    if (onProgress) onProgress(`Found ${citiesToFetch.length} cities to fetch. Starting Damai crawl...`, 5);
 
     let allConcerts: Concert[] = [];
-    const citiesToFetch = uniqueCities;
     const failedCities: string[] = [];
 
     // Per-city timeout: 90s.
@@ -610,6 +626,13 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
             await randomDelay(baseDelay, baseDelay + 2000);
             if (cancelled.value) break;
 
+            // 10% chance of a long random pause for fingerprint dispersion
+            if (Math.random() < 0.1) {
+                console.log(`[fingerprint] Random long pause on ${city.cityName} page ${page}...`);
+                await randomDelay(15000, 30000);
+                if (cancelled.value) break;
+            }
+
             const cityStartPercent = 5 + Math.floor((index / citiesToFetch.length) * 85);
             const citySpanPercent = Math.max(1, Math.floor(85 / citiesToFetch.length));
             const pageProgress = cityStartPercent + Math.min(citySpanPercent, Math.floor((page / 50) * citySpanPercent));
@@ -626,7 +649,7 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
                 const res = await makeRequest('mtop.damai.mec.aristotle.get', {
                     args: JSON.stringify(args), patternName: "category_solo", patternVersion: "4.2",
                     platform: "8", comboChannel: "2", dmChannel: "damai@damaih5_h5"
-                }, undefined, 0, cancelled);
+                }, undefined, 0, cancelled, city.cityName);
                 if (cancelled.value) break;
 
                 if (res.ret && res.ret[0].startsWith('SUCCESS')) {
@@ -656,9 +679,31 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
 
                     const isRiskControl = retMsg.includes('RGV587') || retMsg.includes('TRAFFIC_LIMIT') || retMsg.includes('ILLEGAL_ACCESS');
                     if (isRiskControl) {
-                        console.warn(`⚠️ Risk control on ${city.cityName}, backing off 15-30s...`);
-                        await randomDelay(15000, 30000);
-                        if (cancelled.value) break;
+                        if (retMsg.includes('RGV587')) {
+                            console.warn(`⚠️ RGV587 on ${city.cityName}, switching proxy node...`);
+                            try {
+                                const currentNode = await getCurrentNode();
+                                await handleNodeFailure(Object.assign(new Error('RGV587'), { retMsg }));
+                                markNodeCooldown(currentNode, 15 * 60 * 1000);
+                            } catch (_e) { console.warn('Node switch failed, continuing'); }
+                            // Retry current page with new node
+                            continue;
+                        }
+                        if (retMsg.includes('TRAFFIC_LIMIT')) {
+                            console.warn(`⚠️ TRAFFIC_LIMIT on ${city.cityName}, slowing down...`);
+                            await randomDelay(10000, 20000);
+                            if (cancelled.value) break;
+                            continue;
+                        }
+                        if (retMsg.includes('ILLEGAL_ACCESS')) {
+                            console.warn(`⚠️ ILLEGAL_ACCESS on ${city.cityName}, switching proxy node...`);
+                            try {
+                                const currentNode = await getCurrentNode();
+                                await handleNodeFailure(Object.assign(new Error('ILLEGAL_ACCESS'), { retMsg }));
+                                markNodeCooldown(currentNode, 30 * 60 * 1000);
+                            } catch (_e) { console.warn('Node switch failed, continuing'); }
+                            continue;
+                        }
                     }
 
                     if (cityErrorCount >= 3) {
@@ -681,33 +726,53 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
         return cityResults;
     }
 
-    for (const [index, city] of citiesToFetch.entries()) {
-        const percentage = 5 + Math.floor((index / citiesToFetch.length) * 85);
-        if (onProgress) onProgress(`Fetching Damai: ${city.cityName} (${index + 1}/${citiesToFetch.length})...`, percentage);
+    // --- Batch concurrent execution: 8 cities per batch, 10s between batches ---
+    for (let batchStart = 0; batchStart < citiesToFetch.length; batchStart += CITY_BATCH_SIZE) {
+        const batch = citiesToFetch.slice(batchStart, batchStart + CITY_BATCH_SIZE);
 
-        const cancelled = { value: false };
-        const timeoutHandle = setTimeout(() => {
-            cancelled.value = true;
-            console.warn(`⏱️ Damai ${city.cityName} cancelled after ${CITY_TIMEOUT_MS / 1000}s timeout.`);
-        }, CITY_TIMEOUT_MS);
+        // Concurrently execute all cities in this batch
+        const batchResults = await Promise.allSettled(
+            batch.map((city, i) => {
+                const globalIndex = batchStart + i;
+                const cancelled = { value: false };
+                const timeoutHandle = setTimeout(() => {
+                    cancelled.value = true;
+                    console.warn(`⏱️ Damai ${city.cityName} cancelled after ${CITY_TIMEOUT_MS / 1000}s timeout.`);
+                }, CITY_TIMEOUT_MS);
 
-        try {
-            const cityData = await fetchCity(city, index, cancelled);
-            clearTimeout(timeoutHandle);
-            if (cancelled.value) {
-                failedCities.push(`${city.cityName}(超时)`);
+                return fetchCity(city, globalIndex, cancelled).then(data => {
+                    clearTimeout(timeoutHandle);
+                    return { city, data, cancelled: cancelled.value, error: undefined as any };
+                }).catch(err => {
+                    clearTimeout(timeoutHandle);
+                    console.warn(`Damai ${city.cityName} skipped: ${err.message}`);
+                    return { city, data: [] as Concert[], cancelled: false, error: err };
+                });
+            })
+        );
+
+        // Collect results and write checkpoint per completed city
+        for (const result of batchResults) {
+            if (result.status === 'fulfilled') {
+                const { city, data, cancelled, error } = result.value;
+                if (cancelled) {
+                    failedCities.push(`${city.cityName}(超时)`);
+                } else if (error) {
+                    failedCities.push(city.cityName);
+                } else {
+                    allConcerts.push(...data);
+                    // Write checkpoint immediately after each successful city
+                    await updateSourceProgress('damai', city.cityName, data.length);
+                }
             } else {
-                allConcerts.push(...cityData);
+                // Promise.allSettled rejection (should not happen — fetchCity catches internally)
+                console.warn(`Damai batch city unexpected rejection:`, result.reason);
             }
-        } catch (err: any) {
-            clearTimeout(timeoutHandle);
-            console.warn(`Damai ${city.cityName} skipped: ${err.message}`);
-            failedCities.push(city.cityName);
         }
 
-        // Inter-city delay
-        if (index < citiesToFetch.length - 1) {
-            await randomDelay(3000, 7000);
+        // Inter-batch delay (skip after the last batch)
+        if (batchStart + CITY_BATCH_SIZE < citiesToFetch.length) {
+            await delay(INTER_BATCH_DELAY_MS);
         }
     }
 
@@ -715,10 +780,11 @@ async function runDamaiTask(onProgress: (msg: string, percent: number) => void):
         console.warn(`⚠️ Damai: ${failedCities.length} cities skipped: ${failedCities.join(', ')}`);
     }
 
-    // DeepSeek Enhancement
-    if (DAMAI_CONFIG.deepseekApiKey && allConcerts.length > 0) {
+    // AI identity enhancement
+    const aiApiKey = getConfiguredAiApiKey();
+    if (aiApiKey && allConcerts.length > 0) {
         if (onProgress) onProgress('Enhancing Damai data with AI...', 95);
-        allConcerts = await extractArtistsWithDeepSeek(allConcerts, DAMAI_CONFIG.deepseekApiKey);
+        allConcerts = await extractArtistsWithDeepSeek(allConcerts, aiApiKey, 'damai');
     }
     
     if (onProgress) onProgress('Damai task complete', 100);
@@ -735,10 +801,11 @@ async function runMobileTask(onProgress: (msg: string, percent: number) => void)
         }
     });
 
-    if (DAMAI_CONFIG.deepseekApiKey && concerts.length > 0) {
+    const aiApiKey = getConfiguredAiApiKey();
+    if (aiApiKey && concerts.length > 0) {
         console.log('🤖 Enhancing MoreTickets (Mobile) data with AI...');
         if (onProgress) onProgress('Enhancing MoreTickets (Mobile) data with AI...', 95);
-        concerts = await extractArtistsWithDeepSeek(concerts, DAMAI_CONFIG.deepseekApiKey);
+        concerts = await extractArtistsWithDeepSeek(concerts, aiApiKey, 'moretickets');
     }
     
     if (onProgress) onProgress('Mobile task complete', 100);
@@ -755,10 +822,11 @@ async function runGlobalTask(onProgress: (msg: string, percent: number) => void)
         }
     });
 
-    if (DAMAI_CONFIG.deepseekApiKey && concerts.length > 0) {
+    const aiApiKey = getConfiguredAiApiKey();
+    if (aiApiKey && concerts.length > 0) {
         console.log('🤖 Enhancing MoreTickets (Global) data with AI...');
         if (onProgress) onProgress('Enhancing MoreTickets (Global) data with AI...', 95);
-        concerts = await extractArtistsWithDeepSeek(concerts, DAMAI_CONFIG.deepseekApiKey);
+        concerts = await extractArtistsWithDeepSeek(concerts, aiApiKey, 'moretickets-global');
     }
 
     if (onProgress) onProgress('Global task complete', 100);
@@ -856,25 +924,43 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
             throw new Error('All data sources failed or timed out.');
         }
 
-        // 4. Merge Results (Priority: Damai > Mobile > Global)
-        console.log('🔄 Merging results...');
-        if (onProgress) onProgress('Merging data...', 98);
-        
-        let combined = mergeConcertLists(damaiResult, mobileResult);
-        combined = mergeConcertLists(combined, globalResult);
+        // 4. Segmented save: persist each source immediately after completion
+        console.log('💾 Saving results per source...');
+        if (onProgress) onProgress('Saving data...', 95);
 
-        // 5. Save Data
-        let existingConcerts: Concert[] = [];
-        try {
-            existingConcerts = await getAllConcertsFromStorage();
-        } catch (e) {
-            console.warn('⚠️ Failed to load existing data from storage.');
+        if (damaiResult.length > 0) {
+            console.log(`💾 Saving ${damaiResult.length} Damai concerts...`);
+            await saveConcertsToStorage(damaiResult);
+        }
+        if (mobileResult.length > 0) {
+            console.log(`💾 Saving ${mobileResult.length} MoreTickets concerts...`);
+            await saveConcertsToStorage(mobileResult);
+        }
+        if (globalResult.length > 0) {
+            console.log(`💾 Saving ${globalResult.length} MoreTickets Global concerts...`);
+            await saveConcertsToStorage(globalResult);
         }
 
-        const mergedConcerts = mergeConcertLists(existingConcerts, combined);
+        // 5. Final cross-source merge & dedup
+        const mergeJobStartedAt = Date.now();
+        console.log('MERGE_JOB_START');
+        console.log('🔄 Performing final cross-source merge...');
+        if (onProgress) onProgress('Merging data...', 98);
 
-        await saveConcertsToStorage(mergedConcerts);
-        console.log(`🎉 Data saved to storage`);
+        const existingConcerts = await getAllConcertsFromStorage();
+        console.log(`MERGE_JOB_EXISTING_COUNT count=${existingConcerts.length}`);
+        const allNew = mergeConcertLists(damaiResult, mergeConcertLists(mobileResult, globalResult));
+        console.log(`MERGE_JOB_ALL_NEW_COUNT count=${allNew.length}`);
+        const finalMerged = mergeConcertLists(existingConcerts, allNew);
+        console.log(`MERGE_JOB_FINAL_COUNT count=${finalMerged.length}`);
+        await saveConcertsToStorage(finalMerged);
+        console.log(`MERGE_JOB_DONE existing=${existingConcerts.length} allNew=${allNew.length} final=${finalMerged.length} durationMs=${Date.now() - mergeJobStartedAt}`);
+        console.log(`🎉 Final merge: ${finalMerged.length} total concerts in storage`);
+
+        // 6. Clear checkpoint on successful completion
+        await clearProgress();
+        console.log('🧹 Checkpoint cleared after successful sync.');
+
         if (onProgress) onProgress('Sync complete!', 100);
 
         const parts: string[] = [];
@@ -884,8 +970,8 @@ export async function syncData(config?: Partial<DamaiConfig>): Promise<SyncResul
 
         return {
             success: true,
-            totalNew: mergedConcerts.length - existingConcerts.length,
-            totalCombined: mergedConcerts.length,
+            totalNew: finalMerged.length - existingConcerts.length,
+            totalCombined: finalMerged.length,
             message: summaryMsg,
             timedOutSources,
             failedSources,

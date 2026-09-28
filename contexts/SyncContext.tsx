@@ -28,6 +28,10 @@ interface SyncContextType {
 
 const SyncContext = createContext<SyncContextType | undefined>(undefined);
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<SyncStatus>({
     status: 'idle',
@@ -141,8 +145,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       } else {
         throw new Error(data.message || 'Failed to start sync');
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
       throw error;
     }
   };

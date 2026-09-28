@@ -1,0 +1,771 @@
+{
+  "dryRun": true,
+  "readOnly": true,
+  "source": "db",
+  "dataDir": null,
+  "options": {
+    "limit": 15
+  },
+  "total": 714,
+  "scoreBuckets": {
+    "0-20": 0,
+    "21-40": 59,
+    "41-60": 384,
+    "61-80": 79,
+    "81-100": 192
+  },
+  "eventTypeCounts": {
+    "solo": 565,
+    "unknown": 91,
+    "fan_meeting": 33,
+    "multi_artist": 9,
+    "festival": 15,
+    "tribute": 1
+  },
+  "topSamples": [
+    {
+      "id": "mtglobal_697ad5f3f6ce170001e46121",
+      "source": "moretickets-global",
+      "rawTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "title": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "displayTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "artist": "EXO",
+      "artistPrimary": "EXO",
+      "artistAll": [
+        "EXO"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡室内体育馆",
+      "city": "新加坡",
+      "date": "2026.07.24"
+    },
+    {
+      "id": "mtglobal_699d82057f8e220001a34cff",
+      "source": "moretickets-global",
+      "rawTitle": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "title": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "displayTitle": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "artist": "(G)I-DLE",
+      "artistPrimary": "(G)I-DLE",
+      "artistAll": [
+        "(G)I-DLE"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "启德主场馆",
+      "city": "中国香港",
+      "date": "2026.06.27"
+    },
+    {
+      "id": "mtglobal_69ae7600d52ad2000193d5d0",
+      "source": "moretickets-global",
+      "rawTitle": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "title": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "displayTitle": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "artist": "陈晓东",
+      "artistPrimary": "陈晓东",
+      "artistAll": [
+        "陈晓东"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "红磡香港体育馆",
+      "city": "中国香港",
+      "date": "2026.06.19"
+    },
+    {
+      "id": "mtglobal_69ba576350288d000108f71f",
+      "source": "moretickets-global",
+      "rawTitle": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "title": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "displayTitle": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "artist": "ITZY",
+      "artistPrimary": "ITZY",
+      "artistAll": [
+        "ITZY"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆",
+      "city": "中国香港",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69bb61820d0fbe00013d1c2d",
+      "source": "moretickets-global",
+      "rawTitle": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "title": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "displayTitle": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "artist": "I.O.I",
+      "artistPrimary": "I.O.I",
+      "artistAll": [
+        "I.O.I"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆10号馆",
+      "city": "中国香港",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69cb4936bb7a4a0001c1e896",
+      "source": "moretickets-global",
+      "rawTitle": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "title": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "displayTitle": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "artist": "BABYMONSTER",
+      "artistPrimary": "BABYMONSTER",
+      "artistAll": [
+        "BABYMONSTER"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "蚕室室内体育馆",
+      "city": "韩国",
+      "date": "2026.06.26"
+    },
+    {
+      "id": "mtglobal_69cb5db6bb7a4a0001c416c2",
+      "source": "moretickets-global",
+      "rawTitle": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "title": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "displayTitle": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "artist": "郑秀文",
+      "artistPrimary": "郑秀文",
+      "artistAll": [
+        "郑秀文"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "启德主场馆",
+      "city": "中国香港",
+      "date": "2026.07.10"
+    },
+    {
+      "id": "mtglobal_69cc75a512aa200001848c31",
+      "source": "moretickets-global",
+      "rawTitle": "Massive Attack 巡回现场演唱会-新加坡站",
+      "title": "Massive Attack 巡回现场演唱会-新加坡站",
+      "displayTitle": "Massive Attack 巡回现场演唱会-新加坡站",
+      "artist": "Massive Attack",
+      "artistPrimary": "Massive Attack",
+      "artistAll": [
+        "Massive Attack"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.07.29"
+    },
+    {
+      "id": "mtglobal_69ccc1f612aa2000018d4f79",
+      "source": "moretickets-global",
+      "rawTitle": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "title": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "displayTitle": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "artist": "SVT 十周年",
+      "artistPrimary": "SVT 十周年",
+      "artistAll": [
+        "SVT 十周年"
+      ],
+      "eventType": "fan_meeting",
+      "opportunityScore": 100,
+      "venue": "仁川亚运主体育场",
+      "city": "韩国",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69ccda3d12aa2000018fe29f",
+      "source": "moretickets-global",
+      "rawTitle": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "title": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "displayTitle": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "artist": "Kodaline",
+      "artistPrimary": "Kodaline",
+      "artistAll": [
+        "Kodaline"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.08.08"
+    },
+    {
+      "id": "mtglobal_69d22f612d7b240001318eed",
+      "source": "moretickets-global",
+      "rawTitle": "姜涛「LAVA」演唱会-澳门站",
+      "title": "姜涛「LAVA」演唱会-澳门站",
+      "displayTitle": "姜涛「LAVA」演唱会-澳门站",
+      "artist": "姜涛",
+      "artistPrimary": "姜涛",
+      "artistAll": [
+        "姜涛"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "澳门银河综艺馆",
+      "city": "中国澳门",
+      "date": "2026.06.19"
+    },
+    {
+      "id": "mtglobal_69d350fe2d7b240001421ecc",
+      "source": "moretickets-global",
+      "rawTitle": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "title": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "displayTitle": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "artist": "NMIXX",
+      "artistPrimary": "NMIXX",
+      "artistAll": [
+        "NMIXX"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69d4a1382d7b24000155ada1",
+      "source": "moretickets-global",
+      "rawTitle": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "title": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "displayTitle": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "artist": "草蜢",
+      "artistPrimary": "草蜢",
+      "artistAll": [
+        "草蜢"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡室内体育馆",
+      "city": "新加坡",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69d603b97c83af000116ddfb",
+      "source": "moretickets-global",
+      "rawTitle": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "title": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "displayTitle": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "artist": "LiSA",
+      "artistPrimary": "LiSA",
+      "artistAll": [
+        "LiSA"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆",
+      "city": "中国香港",
+      "date": "2026.07.18"
+    },
+    {
+      "id": "mtglobal_69d71b808849640001b309f2",
+      "source": "moretickets-global",
+      "rawTitle": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "title": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "displayTitle": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "artist": "ChRocktikal 首次世界",
+      "artistPrimary": "ChRocktikal 首次世界",
+      "artistAll": [
+        "ChRocktikal 首次世界"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "澳门银河-G Box",
+      "city": "中国澳门",
+      "date": "2026.06.27"
+    }
+  ],
+  "highSamples": [
+    {
+      "id": "mtglobal_697ad5f3f6ce170001e46121",
+      "source": "moretickets-global",
+      "rawTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "title": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "displayTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-新加坡站",
+      "artist": "EXO",
+      "artistPrimary": "EXO",
+      "artistAll": [
+        "EXO"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡室内体育馆",
+      "city": "新加坡",
+      "date": "2026.07.24"
+    },
+    {
+      "id": "mtglobal_699d82057f8e220001a34cff",
+      "source": "moretickets-global",
+      "rawTitle": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "title": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "displayTitle": "2026 I-DLE 世界巡演 [Syncopation] -香港站",
+      "artist": "(G)I-DLE",
+      "artistPrimary": "(G)I-DLE",
+      "artistAll": [
+        "(G)I-DLE"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "启德主场馆",
+      "city": "中国香港",
+      "date": "2026.06.27"
+    },
+    {
+      "id": "mtglobal_69ae7600d52ad2000193d5d0",
+      "source": "moretickets-global",
+      "rawTitle": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "title": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "displayTitle": "陈晓东 NEON Reflections 30 演唱会-香港站",
+      "artist": "陈晓东",
+      "artistPrimary": "陈晓东",
+      "artistAll": [
+        "陈晓东"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "红磡香港体育馆",
+      "city": "中国香港",
+      "date": "2026.06.19"
+    },
+    {
+      "id": "mtglobal_69ba576350288d000108f71f",
+      "source": "moretickets-global",
+      "rawTitle": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "title": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "displayTitle": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+      "artist": "ITZY",
+      "artistPrimary": "ITZY",
+      "artistAll": [
+        "ITZY"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆",
+      "city": "中国香港",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69bb61820d0fbe00013d1c2d",
+      "source": "moretickets-global",
+      "rawTitle": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "title": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "displayTitle": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+      "artist": "I.O.I",
+      "artistPrimary": "I.O.I",
+      "artistAll": [
+        "I.O.I"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆10号馆",
+      "city": "中国香港",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69cb4936bb7a4a0001c1e896",
+      "source": "moretickets-global",
+      "rawTitle": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "title": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "displayTitle": "2026-27 BABYMONSTER <CHOOM> 世界巡演-首尔站",
+      "artist": "BABYMONSTER",
+      "artistPrimary": "BABYMONSTER",
+      "artistAll": [
+        "BABYMONSTER"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "蚕室室内体育馆",
+      "city": "韩国",
+      "date": "2026.06.26"
+    },
+    {
+      "id": "mtglobal_69cb5db6bb7a4a0001c416c2",
+      "source": "moretickets-global",
+      "rawTitle": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "title": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "displayTitle": "《You & Mi 郑秀文演唱会 2026》-香港站",
+      "artist": "郑秀文",
+      "artistPrimary": "郑秀文",
+      "artistAll": [
+        "郑秀文"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "启德主场馆",
+      "city": "中国香港",
+      "date": "2026.07.10"
+    },
+    {
+      "id": "mtglobal_69cc75a512aa200001848c31",
+      "source": "moretickets-global",
+      "rawTitle": "Massive Attack 巡回现场演唱会-新加坡站",
+      "title": "Massive Attack 巡回现场演唱会-新加坡站",
+      "displayTitle": "Massive Attack 巡回现场演唱会-新加坡站",
+      "artist": "Massive Attack",
+      "artistPrimary": "Massive Attack",
+      "artistAll": [
+        "Massive Attack"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.07.29"
+    },
+    {
+      "id": "mtglobal_69ccc1f612aa2000018d4f79",
+      "source": "moretickets-global",
+      "rawTitle": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "title": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "displayTitle": "SVT 十周年粉丝见面会〈SEVENTEEN in CARAT LAND〉-仁川站",
+      "artist": "SVT 十周年",
+      "artistPrimary": "SVT 十周年",
+      "artistAll": [
+        "SVT 十周年"
+      ],
+      "eventType": "fan_meeting",
+      "opportunityScore": 100,
+      "venue": "仁川亚运主体育场",
+      "city": "韩国",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69ccda3d12aa2000018fe29f",
+      "source": "moretickets-global",
+      "rawTitle": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "title": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "displayTitle": "Kodaline柯达线 告别巡回演唱会 - 新加坡站",
+      "artist": "Kodaline",
+      "artistPrimary": "Kodaline",
+      "artistAll": [
+        "Kodaline"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.08.08"
+    },
+    {
+      "id": "mtglobal_69d22f612d7b240001318eed",
+      "source": "moretickets-global",
+      "rawTitle": "姜涛「LAVA」演唱会-澳门站",
+      "title": "姜涛「LAVA」演唱会-澳门站",
+      "displayTitle": "姜涛「LAVA」演唱会-澳门站",
+      "artist": "姜涛",
+      "artistPrimary": "姜涛",
+      "artistAll": [
+        "姜涛"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "澳门银河综艺馆",
+      "city": "中国澳门",
+      "date": "2026.06.19"
+    },
+    {
+      "id": "mtglobal_69d350fe2d7b240001421ecc",
+      "source": "moretickets-global",
+      "rawTitle": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "title": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "displayTitle": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+      "artist": "NMIXX",
+      "artistPrimary": "NMIXX",
+      "artistAll": [
+        "NMIXX"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡星烁表演艺术中心",
+      "city": "新加坡",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69d4a1382d7b24000155ada1",
+      "source": "moretickets-global",
+      "rawTitle": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "title": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "displayTitle": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+      "artist": "草蜢",
+      "artistPrimary": "草蜢",
+      "artistAll": [
+        "草蜢"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "新加坡室内体育馆",
+      "city": "新加坡",
+      "date": "2026.06.20"
+    },
+    {
+      "id": "mtglobal_69d603b97c83af000116ddfb",
+      "source": "moretickets-global",
+      "rawTitle": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "title": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "displayTitle": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+      "artist": "LiSA",
+      "artistPrimary": "LiSA",
+      "artistAll": [
+        "LiSA"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "亚洲国际博览馆",
+      "city": "中国香港",
+      "date": "2026.07.18"
+    },
+    {
+      "id": "mtglobal_69d71b808849640001b309f2",
+      "source": "moretickets-global",
+      "rawTitle": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "title": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "displayTitle": "ChRocktikal 首次世界巡回演唱会 [CRTK : The Beginning] -澳门站",
+      "artist": "ChRocktikal 首次世界",
+      "artistPrimary": "ChRocktikal 首次世界",
+      "artistAll": [
+        "ChRocktikal 首次世界"
+      ],
+      "eventType": "solo",
+      "opportunityScore": 100,
+      "venue": "澳门银河-G Box",
+      "city": "中国澳门",
+      "date": "2026.06.27"
+    }
+  ],
+  "lowSamples": [
+    {
+      "id": "mt_69855604a763800001c52bdc",
+      "source": "moretickets",
+      "rawTitle": "2026巅峰·斑马音乐节",
+      "title": "2026巅峰·斑马音乐节",
+      "displayTitle": "2026巅峰·斑马音乐节",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "festival",
+      "opportunityScore": 29,
+      "venue": "斑马音乐节草坪",
+      "city": "阜阳",
+      "date": "2026.03.21"
+    },
+    {
+      "id": "mtglobal_695ddf70aad62200012921be",
+      "source": "moretickets-global",
+      "rawTitle": "ONEREPUBLIC “From Asia, With Love” 2026-台北站",
+      "title": "ONEREPUBLIC “From Asia, With Love” 2026-台北站",
+      "displayTitle": "ONEREPUBLIC “From Asia, With Love” 2026-台北站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 29,
+      "venue": "台北小巨蛋",
+      "city": "中国台湾",
+      "date": "2026.03.04"
+    },
+    {
+      "id": "mtglobal_697acc473f844b000180d0c2",
+      "source": "moretickets-global",
+      "rawTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-胡志明站",
+      "title": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-胡志明站",
+      "displayTitle": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-胡志明站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 29,
+      "venue": "SECC Outdoor",
+      "city": "越南",
+      "date": "2026-04-25"
+    },
+    {
+      "id": "mtglobal_68c912f767703400019b455e",
+      "source": "moretickets-global",
+      "rawTitle": "科切拉谷音乐艺术节-印地欧站",
+      "title": "科切拉谷音乐艺术节-印地欧站",
+      "displayTitle": "科切拉谷音乐艺术节-印地欧站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "帝国马球俱乐部",
+      "city": "美国",
+      "date": "2026.04.10"
+    },
+    {
+      "id": "mtglobal_690c57f2ed5cfc00019c667f",
+      "source": "moretickets-global",
+      "rawTitle": "ROLLING LOUD 澳洲2026音乐节-悉尼站",
+      "title": "ROLLING LOUD 澳洲2026音乐节-悉尼站",
+      "displayTitle": "ROLLING LOUD 澳洲2026音乐节-悉尼站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "festival",
+      "opportunityScore": 33,
+      "venue": "百年纪念公园",
+      "city": "澳洲",
+      "date": "2026.03.07"
+    },
+    {
+      "id": "mtglobal_695374197838ce0001a716b1",
+      "source": "moretickets-global",
+      "rawTitle": "Vir Das : Hey Stranger-曼谷站",
+      "title": "Vir Das : Hey Stranger-曼谷站",
+      "displayTitle": "Vir Das : Hey Stranger-曼谷站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "暹罗百丽宫",
+      "city": "泰国",
+      "date": "2026.05.17"
+    },
+    {
+      "id": "mtglobal_6954c9407838ce0001c950b1",
+      "source": "moretickets-global",
+      "rawTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-悉尼站",
+      "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-悉尼站",
+      "displayTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-悉尼站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "Sydney event centre",
+      "city": "澳洲",
+      "date": "2026.03.14"
+    },
+    {
+      "id": "mtglobal_6954e2c86d117d0001850937",
+      "source": "moretickets-global",
+      "rawTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-墨尔本站",
+      "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-墨尔本站",
+      "displayTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-墨尔本站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "派拉蒙剧院",
+      "city": "澳洲",
+      "date": "2026.03.12"
+    },
+    {
+      "id": "mtglobal_695c76ded0b5ae0001145859",
+      "source": "moretickets-global",
+      "rawTitle": "Central Cee – CAN’T RUSH GREATNESS 2026亚洲巡演-首尔站",
+      "title": "Central Cee – CAN’T RUSH GREATNESS 2026亚洲巡演-首尔站",
+      "displayTitle": "Central Cee – CAN’T RUSH GREATNESS 2026亚洲巡演-首尔站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "KINTEX Hall 9",
+      "city": "韩国",
+      "date": "2026.03.14"
+    },
+    {
+      "id": "mtglobal_69719adf3ac53b0001dbbfe8",
+      "source": "moretickets-global",
+      "rawTitle": "AVANTGARDEY 2026 LET’S GROOVE!!-曼谷站",
+      "title": "AVANTGARDEY 2026 LET’S GROOVE!!-曼谷站",
+      "displayTitle": "AVANTGARDEY 2026 LET’S GROOVE!!-曼谷站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "开泰银行暹罗匹克-伽内什剧院",
+      "city": "泰国",
+      "date": "2026.03.09"
+    },
+    {
+      "id": "mtglobal_69719bfd3ac53b0001dbd69d",
+      "source": "moretickets-global",
+      "rawTitle": "Anson Seabra : The I Must Be Dreaming巡回演唱会-吉隆坡站",
+      "title": "Anson Seabra : The I Must Be Dreaming巡回演唱会-吉隆坡站",
+      "displayTitle": "Anson Seabra : The I Must Be Dreaming巡回演唱会-吉隆坡站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "Zepp Kuala Lumpur",
+      "city": "马来西亚",
+      "date": "2026.03.31"
+    },
+    {
+      "id": "mtglobal_697850db9fcede00013160bc",
+      "source": "moretickets-global",
+      "rawTitle": "TWICE＜THIS IS FOR＞世界巡演-台北站",
+      "title": "TWICE＜THIS IS FOR＞世界巡演-台北站",
+      "displayTitle": "TWICE＜THIS IS FOR＞世界巡演-台北站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "台北大巨蛋",
+      "city": "中国台湾",
+      "date": "2026.03.20"
+    },
+    {
+      "id": "mtglobal_697975679d90f5000142dacb",
+      "source": "moretickets-global",
+      "rawTitle": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-曼谷站",
+      "title": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-曼谷站",
+      "displayTitle": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-曼谷站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "凤凰大宴会厅",
+      "city": "泰国",
+      "date": "2026.03.07"
+    },
+    {
+      "id": "mtglobal_697c5d533d498600010b75c1",
+      "source": "moretickets-global",
+      "rawTitle": "Anson Seabra : The I Must Be Dreaming巡回演唱会-台北站",
+      "title": "Anson Seabra : The I Must Be Dreaming巡回演唱会-台北站",
+      "displayTitle": "Anson Seabra : The I Must Be Dreaming巡回演唱会-台北站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "Legacy TERA",
+      "city": "中国台湾",
+      "date": "2026.05.25"
+    },
+    {
+      "id": "mtglobal_69f2e8bb357a4100019e975a",
+      "source": "moretickets-global",
+      "rawTitle": "LingOrm Birthday Fan Party-曼谷站",
+      "title": "LingOrm Birthday Fan Party-曼谷站",
+      "displayTitle": "LingOrm Birthday Fan Party-曼谷站",
+      "artist": "",
+      "artistPrimary": "",
+      "artistAll": [],
+      "eventType": "unknown",
+      "opportunityScore": 33,
+      "venue": "UOB LIVE",
+      "city": "泰国",
+      "date": "2026.05.31"
+    }
+  ],
+  "missingArtistPrimaryCount": 105,
+  "artistAllGte2Count": 6,
+  "metadata": {
+    "scoreNote": "opportunityScore uses stored value when present; otherwise it is computed in memory from existing scoring rules."
+  }
+}

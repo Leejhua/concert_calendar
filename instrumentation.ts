@@ -1,6 +1,10 @@
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    if (process.env.BACKGROUND_SYNC_ENABLED === 'false') {
+      console.log('Background Sync: Disabled by configuration.');
+      return;
+    }
     // Only run on server side
     console.log('⏱️ Starting Background Sync Service...');
     
@@ -25,7 +29,7 @@ export async function register() {
 
             // 2. Check if data is fresh enough (Staleness Check)
             // We use a slightly shorter threshold (e.g. 7.9h) to ensure we catch it if it's close
-            if (now - status.lastUpdated < SYNC_INTERVAL) {
+            if (status.status === 'completed' && now - status.lastUpdated < SYNC_INTERVAL) {
                 // console.log('Background Sync: Data is fresh. Skipping.');
                 return;
             }

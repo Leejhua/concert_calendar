@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
+import { getConcertDisplayArtist, getConcertDisplayTitle } from '@/lib/concert-identity';
 import { CalendarEvent } from '@/lib/types';
 import { format, isSameDay } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -105,13 +106,13 @@ export function MobileConcertCalendar({ events }: MobileConcertCalendarProps) {
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        {event.resource.artist && event.resource.artist !== 'Unknown' && (
+                        {getConcertDisplayArtist(event.resource) && (
                           <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-5">
-                            {event.resource.artist}
+                            {getConcertDisplayArtist(event.resource)}
                           </Badge>
                         )}
                         <h4 className="font-semibold text-sm leading-tight line-clamp-2">
-                          {event.title.replace(/^【.*?】/, '')}
+                          {getConcertDisplayTitle(event.resource)}
                         </h4>
                       </div>
                       
@@ -147,12 +148,12 @@ export function MobileConcertCalendar({ events }: MobileConcertCalendarProps) {
               <DrawerHeader className="text-left">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge>{selectedEvent.resource.city}</Badge>
-                  {selectedEvent.resource.artist && (
-                    <Badge variant="outline">{selectedEvent.resource.artist}</Badge>
+                  {getConcertDisplayArtist(selectedEvent.resource) && (
+                    <Badge variant="outline">{getConcertDisplayArtist(selectedEvent.resource)}</Badge>
                   )}
                 </div>
                 <DrawerTitle className="leading-snug text-xl">
-                  {selectedEvent.title}
+                  {getConcertDisplayTitle(selectedEvent.resource)}
                 </DrawerTitle>
                 <DrawerDescription className="mt-1">
                   {selectedEvent.resource.venue}
@@ -184,7 +185,7 @@ export function MobileConcertCalendar({ events }: MobileConcertCalendarProps) {
                       <User className="w-3 h-3" /> 艺人/团体
                     </label>
                     <p className="text-sm font-medium">
-                      {selectedEvent.resource.artist || '群星'}
+                      {getConcertDisplayArtist(selectedEvent.resource) || '待识别'}
                     </p>
                   </div>
 

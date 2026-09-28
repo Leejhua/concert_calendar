@@ -2,6 +2,13 @@
 import { NextResponse } from 'next/server';
 import { syncData } from '@/lib/damai-crawler';
 import { updateSyncStatus, getSyncStatus } from '@/lib/sync-status';
+// Side-effect import: configures the global fetch dispatcher / proxy agent
+// before any network request is made during the sync.
+import '@/lib/proxy-agent';
+
+function getErrorMessage(error: unknown) {
+    return error instanceof Error ? error.message : 'Unknown error';
+}
 
 export async function POST(request: Request) {
     try {
@@ -82,7 +89,7 @@ export async function POST(request: Request) {
         // Fire and forget
         (async () => {
             try {
-                const syncConfig: any = {
+                const syncConfig: Parameters<typeof syncData>[0] = {
                     deepseekApiKey: process.env.DEEPSEEK_API_KEY,
                     onProgress: (msg: string, prog: number) => {
                         updateSyncStatus({
@@ -106,11 +113,11 @@ export async function POST(request: Request) {
                     message: result.message || (result.success ? 'Sync completed' : 'Sync failed'),
                     result
                 });
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Background Sync Error:', err);
                 updateSyncStatus({
                     status: 'error',
-                    message: err.message || 'Unknown error',
+                    message: getErrorMessage(err),
                     progress: 0
                 });
             }
@@ -118,7 +125,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, message: 'Sync started in background' });
 
-    } catch (error: any) {
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ success: false, message: getErrorMessage(error) }, { status: 500 });
     }
 }

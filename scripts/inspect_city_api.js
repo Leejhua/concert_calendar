@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const https = require('https');
 const crypto = require('crypto');

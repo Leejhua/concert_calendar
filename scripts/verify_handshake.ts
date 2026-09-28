@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports, prefer-const */
 import https from 'https';
 
 const APP_KEY = '12574478';

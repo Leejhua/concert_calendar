@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Calendar, Views, View, EventProps, DateHeaderProps } from 'react-big-calendar';
 import { localizer } from '@/lib/calendar-utils';
-import { Concert } from '@/lib/damai-crawler';
 import { CalendarToolbar } from './CalendarToolbar';
 import { DynamicCalendarView } from './DynamicCalendarView';
 import { CalendarEventCard } from './CalendarEventCard';
-import { getHolidayInfo, getDateStatus } from '@/lib/holidays';
+import { getDateStatus } from '@/lib/holidays';
 import { cn } from '@/lib/utils';
 
 import { CalendarEvent } from '@/lib/types';
@@ -75,11 +74,6 @@ export function ConcertCalendar({ events }: ConcertCalendarProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [view, setView] = useState<View>(Views.MONTH);
   const [viewDate, setViewDate] = useState(new Date());
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const { components } = useMemo(() => ({
     components: {
@@ -117,10 +111,6 @@ export function ConcertCalendar({ events }: ConcertCalendarProps) {
     setView(Views.DAY);
     setViewDate(date);
   }, []);
-
-  if (!isMounted) {
-    return <div className="h-[calc(100vh-200px)] min-h-[600px] w-full bg-background rounded-lg border shadow-sm p-4 flex items-center justify-center text-muted-foreground">加载日历中...</div>;
-  }
 
   if (!isDesktop) {
     return (

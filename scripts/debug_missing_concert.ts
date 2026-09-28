@@ -1,5 +1,6 @@
 
-import { fetchInitialToken, makeRequest, parseConcertNodes, getTargetCityList } from '../lib/damai-crawler';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { fetchInitialToken, makeRequest, parseConcertNodes } from '../lib/damai-crawler';
 
 async function diagnose() {
     const args = process.argv.slice(2);

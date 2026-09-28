@@ -1,11 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { CalendarEvent } from '@/lib/types';
-import { Concert } from '@/lib/damai-crawler';
+import { getConcertDisplayArtist, getConcertDisplayTitle } from '@/lib/concert-identity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Drawer,
@@ -24,7 +23,6 @@ import {
   X, 
   User,
   Globe,
-  ChevronDown,
   ChevronUp
 } from 'lucide-react';
 import { format, isSameDay, addDays, subDays } from 'date-fns';
@@ -385,13 +383,13 @@ export function MobileDashboard({
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {event.resource.artist && event.resource.artist !== 'Unknown' && (
+                        {getConcertDisplayArtist(event.resource) && (
                           <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-5 shrink-0">
-                            {event.resource.artist}
+                            {getConcertDisplayArtist(event.resource)}
                           </Badge>
                         )}
                         <h4 className="font-semibold text-sm leading-tight line-clamp-2">
-                          {event.title.replace(/^【.*?】/, '')}
+                          {getConcertDisplayTitle(event.resource)}
                         </h4>
                       </div>
                       
@@ -439,12 +437,12 @@ export function MobileDashboard({
               <DrawerHeader className="text-left">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge>{detailEvent.resource.city}</Badge>
-                  {detailEvent.resource.artist && (
-                    <Badge variant="outline">{detailEvent.resource.artist}</Badge>
+                  {getConcertDisplayArtist(detailEvent.resource) && (
+                    <Badge variant="outline">{getConcertDisplayArtist(detailEvent.resource)}</Badge>
                   )}
                 </div>
                 <DrawerTitle className="leading-snug text-xl">
-                  {detailEvent.title}
+                  {getConcertDisplayTitle(detailEvent.resource)}
                 </DrawerTitle>
                 <DrawerDescription className="mt-1">
                   {detailEvent.resource.venue}
@@ -476,7 +474,7 @@ export function MobileDashboard({
                       <User className="w-3 h-3" /> 艺人/团体
                     </label>
                     <p className="text-sm font-medium">
-                      {detailEvent.resource.artist || '群星'}
+                      {getConcertDisplayArtist(detailEvent.resource) || '待识别'}
                     </p>
                   </div>
 

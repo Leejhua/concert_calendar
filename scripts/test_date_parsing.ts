@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { transformConcertsToEvents } from '../lib/data-transformer';
 
 const testConcerts = [

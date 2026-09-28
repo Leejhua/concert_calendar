@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveConcertsToStorage, getAllConcertsFromStorage, clearAllConcerts, getConcertCount } from '@/lib/db';
+import { replaceConcertsInStorage, getAllConcertsFromStorage } from '@/lib/db';
 import { mergeConcertLists } from '@/lib/deduplication';
 import { updateSyncStatus } from '@/lib/sync-status';
 import { Concert } from '@/lib/damai-crawler';
@@ -60,15 +60,14 @@ export async function POST(request: NextRequest) {
         let existingCount = 0;
 
         if (mode === 'replace') {
-            await clearAllConcerts();
-            await saveConcertsToStorage(concerts);
-            finalConcerts = concerts;
+            finalConcerts = mergeConcertLists([], concerts);
+            await replaceConcertsInStorage(finalConcerts);
         } else {
-            // merge mode: deduplicate with existing data
+            // merge mode: deduplicate with existing data, then rewrite the snapshot.
             const existing = await getAllConcertsFromStorage();
             existingCount = existing.length;
-            finalConcerts = mergeConcertLists(existing, concerts);
-            await saveConcertsToStorage(finalConcerts);
+            finalConcerts = mergeConcertLists([], mergeConcertLists(existing, concerts));
+            await replaceConcertsInStorage(finalConcerts);
         }
 
         // Update sync status so the frontend knows data was refreshed
@@ -91,10 +90,11 @@ export async function POST(request: NextRequest) {
             message: `Saved ${finalConcerts.length} concerts (${mode} mode)`,
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Upload error:', error);
+        const message = error instanceof Error ? error.message : 'Upload failed';
         return NextResponse.json(
-            { success: false, message: error.message },
+            { success: false, message },
             { status: 500 }
         );
     }

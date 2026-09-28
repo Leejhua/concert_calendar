@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getAllConcertsFromStorage, saveConcertsToStorage } from '../lib/db';
+import { getAllConcertsFromStorage, replaceConcertsInStorage } from '../lib/db';
 import { extractArtistsWithDeepSeek, Concert } from '../lib/damai-crawler';
 
 // Manually load .env.local
@@ -36,15 +36,15 @@ async function main() {
     console.log(`✅ Loaded ${allConcerts.length} concerts.`);
 
     const concertsToFix: Concert[] = [];
-    let fixCount = 0;
 
     // Identify concerts that need fixing
     for (const concert of allConcerts) {
         if (concert.artist && INVALID_ARTIST_VALUES.includes(concert.artist)) {
-            // Reset to Unknown to trigger AI extraction
-            concert.artist = 'Unknown';
+            // Clear the legacy artist field so structured extraction can refill it.
+            concert.artist = '';
+            concert.artistPrimary = '';
+            concert.artistAll = [];
             concertsToFix.push(concert);
-            fixCount++;
         }
     }
 
@@ -70,39 +70,7 @@ async function main() {
     }
 
     console.log('\n💾 Saving updated data...');
-    // We pass the entire list because `saveConcertsToStorage` handles distribution to monthly files.
-    // However, `saveConcertsToStorage` appends/merges. To ensure updates are applied, it should be fine as long as IDs match.
-    // But `saveConcertsToStorage` logic:
-    // It loads existing monthly file, merges `newConcerts` into it.
-    // The merge logic prioritizes existing data unless we force update?
-    // Let's check `db.ts`.
-    
-    // Actually, `saveConcertsToStorage` calls `mergeConcertLists`.
-    // In `mergeConcertLists` (deduplication.ts):
-    // If duplicate found:
-    //   Enrich artist if existing is invalid and new is valid.
-    
-    // Here, `allConcerts` contains the UPDATED objects (with real artist names).
-    // The files on disk contain the OLD objects (with "歌手").
-    // When we call `saveConcertsToStorage(allConcerts)`, it will:
-    // 1. Group `allConcerts` by month.
-    // 2. For each month, load file from disk (OLD data).
-    // 3. Merge `allConcerts` (NEW data) INTO file data (OLD data).
-    //    `mergeConcertLists(primary=OLD, secondary=NEW)`
-    
-    // Wait! `saveConcertsToStorage` implementation:
-    // const existing = getConcertsByMonth(month);
-    // const merged = mergeConcertLists(existing, monthConcerts);
-    
-    // In `mergeConcertLists(primary, secondary)`:
-    // Primary is OLD (from disk), Secondary is NEW (our fixed list).
-    // If duplicate found:
-    //   `isExistingArtistInvalid` checks `primary.artist`.
-    //   If primary is "歌手", and secondary is "Jay Chou", it WILL update!
-    //   Wait, I just updated `deduplication.ts` to treat "歌手" as invalid.
-    //   So yes, it should work!
-    
-    await saveConcertsToStorage(allConcerts);
+    await replaceConcertsInStorage(allConcerts);
 
     console.log('✅ Fix completed successfully!');
 }

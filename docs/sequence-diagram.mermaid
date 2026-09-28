@@ -1,0 +1,71 @@
+sequenceDiagram
+    participant Entry as sync_data.ts
+    participant Pool as proxy-pool.ts
+    participant Clash as Clash API :9097
+    participant Crawler as damai-crawler.ts
+    participant Damai as 大麦 MTOP API
+
+    Note over Entry: P1 启动流程
+
+    Entry->>Pool: prepareProxyPool('damai')
+    activate Pool
+
+    Pool->>Clash: GET /proxies/GLOBAL
+    Clash-->>Pool: { type: "Selector", all: ["HK-01", "JP-02", ...], now: "HK-01" }
+
+    loop 遍历 GLOBAL.all 节点
+        Pool->>Clash: GET /proxies/{name}/delay?url=...&timeout=5000
+        alt 节点可达
+            Clash-->>Pool: { delay: 123 }
+            Pool->>Pool: 记录延迟 ms
+        else 超时/不通
+            Clash-->>Pool: 超时无响应
+            Pool->>Pool: 标记为 null（死节点）
+        end
+    end
+
+    Pool->>Pool: 过滤死节点 → 按延迟排序 → 地区偏好加权 → 取 Top N
+    Pool->>Pool: healthyPool = ["HK-01", "SG-03", "JP-02", ...]
+    Pool->>Clash: PUT /proxies/GLOBAL { name: "HK-01" }
+    Clash-->>Pool: 204 No Content
+    Pool->>Pool: currentNode = "HK-01"
+    deactivate Pool
+
+    Entry->>Crawler: syncData(config)
+    activate Crawler
+
+    Crawler->>Crawler: runDamaiTask → 分批并发 fetchCity
+
+    loop 每个城市分页抓取
+        Crawler->>Crawler: makeRequest(api, data)
+        Crawler->>Damai: HTTPS request via proxy agent
+        Damai-->>Crawler: response
+
+        alt retMsg 含 RGV587
+            Crawler->>Pool: handleNodeFailure(Error('RGV587'))
+            activate Pool
+            Pool->>Pool: markNodeCooldown(currentNode, 15min)
+            Pool->>Pool: rotateToNextNode()
+            Pool->>Clash: PUT /proxies/GLOBAL { name: "SG-03" }
+            Clash-->>Pool: 204
+            Pool->>Pool: currentNode = "SG-03"
+            deactivate Pool
+            Crawler->>Crawler: continue（重试当前页，新节点）
+        else retMsg 含 TRAFFIC_LIMIT
+            Crawler->>Crawler: randomDelay(10s, 20s) 降速不切节点
+            Crawler->>Crawler: continue
+        else retMsg 含 ILLEGAL_ACCESS
+            Crawler->>Pool: handleNodeFailure(Error('ILLEGAL_ACCESS'))
+            activate Pool
+            Pool->>Pool: markNodeCooldown(currentNode, 30min)
+            Pool->>Pool: rotateToNextNode()
+            Pool->>Clash: PUT /proxies/GLOBAL { name: "JP-02" }
+            Clash-->>Pool: 204
+            deactivate Pool
+            Crawler->>Crawler: continue
+        else SUCCESS
+            Crawler->>Crawler: 解析数据，写 checkpoint
+        end
+    end
+
+    deactivate Crawler

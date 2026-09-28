@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const */
 import https from 'https';
 import { Concert, CITY_BLACKLIST } from './damai-crawler';
+// Proxy support: route every outbound request through the configured proxy.
+import { getProxyAgent } from './proxy-agent';
+// Proxy-aware retry: retry on ECONNRESET / ECONNREFUSED / ETIMEDOUT.
+import { withProxyRetry } from './proxy-retry';
 
 // --- Types ---
 
@@ -44,35 +49,28 @@ function getBackoffMs(retryCount: number): number {
     return Math.min(800 * Math.pow(2, retryCount), 6000) + Math.floor(Math.random() * 400);
 }
 
-function makeRequest(path: string, method: 'GET' | 'POST', data: any = null, retryCount = 0): Promise<any> {
+/**
+ * Core HTTP request — one-shot, no retry logic.
+ * Rejects on any failure so upper layers can classify and retry independently.
+ */
+function makeRequestOnce(path: string, method: 'GET' | 'POST', data: any = null): Promise<any> {
     return new Promise((resolve, reject) => {
-        const options = {
+        const options: https.RequestOptions = {
             hostname: 'm3.tking.cn',
             path: path,
             method: method,
             headers: {
                 ...CONFIG.headers,
                 'Content-Length': data ? Buffer.byteLength(JSON.stringify(data)) : 0
-            }
-        };
-
-        const retryWithBackoff = (reason: string) => {
-            if (retryCount >= REQUEST_MAX_RETRY) {
-                reject(new Error(`[MoreTickets] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
-                return;
-            }
-            const nextAttempt = retryCount + 1;
-            const waitMs = getBackoffMs(retryCount);
-            console.warn(`[MoreTickets] ${reason}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
-            setTimeout(() => {
-                resolve(makeRequest(path, method, data, nextAttempt));
-            }, waitMs);
+            },
+            // Route through the configured HTTP proxy (null => default agent).
+            agent: getProxyAgent() ?? undefined,
         };
 
         const req = https.request(options, (res) => {
             const statusCode = res.statusCode || 0;
             if (statusCode >= 500) {
-                retryWithBackoff(`HTTP ${statusCode}`);
+                reject(new Error(`HTTP ${statusCode}`));
                 return;
             }
             const chunks: Buffer[] = [];
@@ -82,8 +80,8 @@ function makeRequest(path: string, method: 'GET' | 'POST', data: any = null, ret
                 try {
                     const json = JSON.parse(body);
                     resolve(json);
-                } catch (e) {
-                    retryWithBackoff(`Failed to parse response: ${body.substring(0, 100)}...`);
+                } catch {
+                    reject(new Error(`Failed to parse response: ${body.substring(0, 100)}...`));
                 }
             });
         });
@@ -91,13 +89,46 @@ function makeRequest(path: string, method: 'GET' | 'POST', data: any = null, ret
         req.setTimeout(REQUEST_TIMEOUT_MS, () => {
             req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
         });
-        req.on('error', (err: any) => retryWithBackoff(err.message || 'Network error'));
+        req.on('error', (err: any) => reject(err));
 
         if (data) {
             req.write(JSON.stringify(data));
         }
         req.end();
     });
+}
+
+/**
+ * Existing application-level retry: handles HTTP 5xx, parse errors, timeouts,
+ * and other non-proxy failures with exponential backoff (up to REQUEST_MAX_RETRY).
+ * Preserves the original error `.code` so the outer proxy-retry layer can still
+ * classify proxy errors after app-level retries are exhausted.
+ */
+function makeRequestWithRetry(path: string, method: 'GET' | 'POST', data: any = null, retryCount = 0): Promise<any> {
+    return makeRequestOnce(path, method, data).catch((err: any) => {
+        if (retryCount >= REQUEST_MAX_RETRY) {
+            const finalErr = new Error(`[MoreTickets] ${err.message} | reached max retry ${REQUEST_MAX_RETRY}`);
+            (finalErr as any).code = err.code; // Preserve error code for proxy detection
+            throw finalErr;
+        }
+        const nextAttempt = retryCount + 1;
+        const waitMs = getBackoffMs(retryCount);
+        console.warn(`[MoreTickets] ${err.message}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(makeRequestWithRetry(path, method, data, nextAttempt));
+            }, waitMs);
+        });
+    });
+}
+
+/**
+ * Public request API: wraps the application-level retry inside proxy-aware retry.
+ * Proxy errors (ECONNRESET, ECONNREFUSED, ETIMEDOUT) are retried independently
+ * from the application-level retry count.
+ */
+function makeRequest(path: string, method: 'GET' | 'POST', data: any = null): Promise<any> {
+    return withProxyRetry(() => makeRequestWithRetry(path, method, data));
 }
 
 // --- Main Logic ---
@@ -162,6 +193,45 @@ export async function fetchMoreTicketsConcerts(cityId: string, page: number = 1)
     }
 }
 
+/**
+ * Fetch all pages for a single city.
+ * Internal logic unchanged from the original per-city loop.
+ */
+async function fetchAllPagesForCity(city: City): Promise<Concert[]> {
+    const concerts: Concert[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { items, total } = await fetchMoreTicketsConcerts(city.cityOID, page);
+
+        if (items.length > 0) {
+            // Filter blacklisted cities
+            const validItems = items.filter(item => {
+                const isBlacklisted = CITY_BLACKLIST.some(b => item.city.includes(b));
+                return !isBlacklisted;
+            });
+
+            concerts.push(...validItems);
+            // Check if we need next page
+            if (page * 10 >= total) {
+                hasMore = false;
+            } else {
+                page++;
+                // Small delay to be nice
+                await new Promise(r => setTimeout(r, 200));
+            }
+        } else {
+            hasMore = false;
+        }
+
+        // Safety break
+        if (page > 20) hasMore = false;
+    }
+
+    return concerts;
+}
+
 export async function fetchAllMoreTicketsConcerts(onProgress?: (msg: string, progress?: number) => void): Promise<Concert[]> {
     const cities = await fetchMoreTicketsCities();
     
@@ -173,41 +243,35 @@ export async function fetchAllMoreTicketsConcerts(onProgress?: (msg: string, pro
 
     console.log(`[MoreTickets] Found ${cities.length} cities, ${targetCityObjs.length} after blacklist.`);
 
+    const BATCH_SIZE = 8;
+    const BATCH_INTERVAL_MS = 10000;
     let allConcerts: Concert[] = [];
 
-    for (const [index, city] of targetCityObjs.entries()) {
-        const percentage = Math.floor((index / targetCityObjs.length) * 100);
-        if (onProgress) onProgress(`Fetching MoreTickets: ${city.cityName} (${index + 1}/${targetCityObjs.length})`, percentage);
-        
-        let page = 1;
-        let hasMore = true;
-        
-        while (hasMore) {
-            const { items, total } = await fetchMoreTicketsConcerts(city.cityOID, page);
-            
-            if (items.length > 0) {
-                // Filter blacklisted cities
-                const validItems = items.filter(item => {
-                    const isBlacklisted = CITY_BLACKLIST.some(b => item.city.includes(b));
-                    return !isBlacklisted;
-                });
+    for (let batchStart = 0; batchStart < targetCityObjs.length; batchStart += BATCH_SIZE) {
+        const batch = targetCityObjs.slice(batchStart, batchStart + BATCH_SIZE);
 
-                allConcerts.push(...validItems);
-                // Check if we need next page
-                // total is total items. 
-                if (page * 10 >= total) {
-                    hasMore = false;
-                } else {
-                    page++;
-                    // Small delay to be nice
-                    await new Promise(r => setTimeout(r, 200));
-                }
-            } else {
-                hasMore = false;
+        if (onProgress) {
+            const batchEnd = Math.min(batchStart + BATCH_SIZE, targetCityObjs.length);
+            const percentage = Math.floor((batchStart / targetCityObjs.length) * 100);
+            onProgress(`Fetching MoreTickets batch: cities ${batchStart + 1}-${batchEnd}/${targetCityObjs.length}`, percentage);
+        }
+
+        const batchResults = await Promise.allSettled(
+            batch.map(city => fetchAllPagesForCity(city).catch(err => {
+                console.warn(`MoreTickets ${city.cityName} failed: ${err.message}`);
+                return [];
+            }))
+        );
+
+        for (const result of batchResults) {
+            if (result.status === 'fulfilled') {
+                allConcerts.push(...result.value);
             }
-            
-            // Safety break
-            if (page > 20) hasMore = false; 
+        }
+
+        // Batch interval — wait 10s between batches (skip after the last batch)
+        if (batchStart + BATCH_SIZE < targetCityObjs.length) {
+            await new Promise(r => setTimeout(r, BATCH_INTERVAL_MS));
         }
     }
     

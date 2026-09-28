@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,7 +29,7 @@ export function CookieConfigDialog() {
 
     try {
       await startSync(curlCommand);
-    } catch (error) {
+    } catch {
       // Error is already toasted by context
     }
   };
@@ -37,7 +37,7 @@ export function CookieConfigDialog() {
   const handleAutoSync = async () => {
     try {
       await startSync();
-    } catch (error) {
+    } catch {
       // Error is already toasted by context
     }
   };

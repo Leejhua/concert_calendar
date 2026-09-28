@@ -1,0 +1,1754 @@
+
+> concert-calendar@0.1.0 report:dedup-candidates
+> tsx scripts/report_dedup_candidates.ts --limit 50
+
+{
+  "dryRun": true,
+  "totalConcerts": 715,
+  "totalCandidates": 371,
+  "options": {
+    "minScore": 45,
+    "maxScore": 100,
+    "limit": 50
+  },
+  "threshold": 55,
+  "candidates": [
+    {
+      "left": {
+        "id": "mtglobal_69f2ef65357a4100019f2161",
+        "title": "SOUND PLANET FESTIVAL 2026-仁川站",
+        "artist": "单日票",
+        "city": "韩国",
+        "date": "2026.09.05",
+        "venue": "Paradise City",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69f2f108357a4100019f3aa6",
+        "title": "SOUND PLANET FESTIVAL 2026-仁川站",
+        "artist": "两日通票",
+        "city": "韩国",
+        "date": "2026.9.5-9.6 兩日通票",
+        "venue": "Paradise City",
+        "projectId": null
+      },
+      "score": 95,
+      "titleSimilarity": 1,
+      "venueSimilarity": 1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": false,
+      "productVariantConflict": true,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "product_variant_conflict",
+        "date_range_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次巡回演唱会“INTO THE WISH: Our WISH”-澳门站",
+        "artist": "NCT WISH 第一次",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次世界巡回演唱会「INTO THE WISH : Our WISH」-澳门站",
+        "artist": "NCT WISH",
+        "city": "中国澳门",
+        "date": "2026.03.21-2026.03.22",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "score": 93.44,
+      "titleSimilarity": 0.938,
+      "venueSimilarity": 1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "merge_candidate"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69450601be402700018b6995",
+        "title": "汪苏泷 2026 \"罗曼前传\"世界巡回演唱会-澳门站",
+        "artist": "",
+        "city": "中国澳门",
+        "date": "2026.02.27",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_69450601be402700018b6995",
+        "title": "汪苏泷 2026「罗曼前传」世界巡回演唱会-澳门站",
+        "artist": "汪苏泷",
+        "city": "中国澳门",
+        "date": "2026.02.27-2026.03.01",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "score": 90.45,
+      "titleSimilarity": 0.818,
+      "venueSimilarity": 1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "merge_candidate"
+    },
+    {
+      "left": {
+        "id": "mt_697c1aca6fdc6a00010ed2d1",
+        "title": "【中国香港站】王菀之 × 苏打绿 演唱回-香港站",
+        "artist": "王菀之",
+        "city": "中国香港",
+        "date": "2026.02.28",
+        "venue": "香港湾仔会议展览中心-HALL 58C",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_697c1aca6fdc6a00010ed2d1",
+        "title": "王菀之 × 苏打绿  演唱会-香港站",
+        "artist": "",
+        "city": "中国香港",
+        "date": "2026.02.28",
+        "venue": "湾仔会议展览中心 5BC馆",
+        "projectId": null
+      },
+      "score": 84.63,
+      "titleSimilarity": 0.75,
+      "venueSimilarity": 0.588,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "merge_candidate"
+    },
+    {
+      "left": {
+        "id": "mt_6949fcb3a4ace50001e35acc",
+        "title": "Dearest Dear Jane Live",
+        "artist": "Dear Jane",
+        "city": "广州",
+        "date": "2026.03.14",
+        "venue": "宝能广州国际体育演艺中心",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_6982cdeb50b3630001a326e9",
+        "title": "周兴哲 《Odyssey•Star旅程•星空》巡回演唱会",
+        "artist": "周兴哲",
+        "city": "广州",
+        "date": "2026.03.14",
+        "venue": "广州大学城体育中心体育场",
+        "projectId": null
+      },
+      "score": 82.92,
+      "titleSimilarity": 0.65,
+      "venueSimilarity": 0.667,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_697d673674eb550001cd7748",
+        "title": "幸田来未25周年纪念巡演2026 〜De-CODE〜-香港站",
+        "artist": "幸田来未25周年纪念",
+        "city": "中国香港",
+        "date": "2026.03.21",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_6972dab93ac53b0001f663a9",
+        "title": "ComplexCon Hong Kong 2026-香港站",
+        "artist": "单日票",
+        "city": "中国香港",
+        "date": "2026.03.21-2026.03.22",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "score": 81.25,
+      "titleSimilarity": 0.45,
+      "venueSimilarity": 1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69e48cbbc50af20001881296",
+        "title": "NEXZ Global Showcase event Mmchk : Not Typical-香港站",
+        "artist": "NEXZ",
+        "city": "中国香港",
+        "date": "2026-06-06",
+        "venue": "安盛创梦馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69cb4013bb7a4a0001c0e2a6",
+        "title": "GACKT YELLOW FRIED CHICKENz 世界巡回演唱会 ATTACK OF YFCZ-香港站",
+        "artist": "GACKT",
+        "city": "中国香港",
+        "date": "2026.06.06",
+        "venue": "TIDES",
+        "projectId": null
+      },
+      "score": 80.63,
+      "titleSimilarity": 0.825,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6a0bd2a9270468000111e7f8",
+        "title": "BOYNEXTDOOR‘KNOCK ON Vol.2’巡演-首尔站",
+        "artist": "BOYNEXTDOOR",
+        "city": "韩国",
+        "date": "2026.07.17",
+        "venue": "首尔奥林匹克体操竞技场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69fc34044396c500016d9784",
+        "title": "U-KNOW PROJECT 26 : SCENE#1-首尔站",
+        "artist": "U-KNOW",
+        "city": "韩国",
+        "date": "2026.07.17",
+        "venue": "奥林匹克手球体育馆",
+        "projectId": null
+      },
+      "score": 80.17,
+      "titleSimilarity": 0.625,
+      "venueSimilarity": 0.455,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6925581ac862ee0001d99f30",
+        "title": "陶喆 Soul Power II 世界巡回演唱会-新加坡站",
+        "artist": "陶喆",
+        "city": "新加坡",
+        "date": "2026.02.28",
+        "venue": "新加坡室内体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_693251085085ae0001d1e351",
+        "title": "2026 QWER 首次世界巡回演唱会<ROCKATION>-新加坡站",
+        "artist": "2026 QWER 首次世界",
+        "city": "新加坡",
+        "date": "2026.02.28",
+        "venue": "新加坡新传媒剧院",
+        "projectId": null
+      },
+      "score": 78.89,
+      "titleSimilarity": 0.556,
+      "venueSimilarity": 0.5,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69d350fe2d7b240001421ecc",
+        "title": "NMIXX <EPISODE 1 : ZERO FRONTIER> 首次世界巡回演唱会-新加坡站",
+        "artist": "NMIXX",
+        "city": "新加坡",
+        "date": "2026.06.20",
+        "venue": "新加坡星烁表演艺术中心",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69d4a1382d7b24000155ada1",
+        "title": "GRASSHOPPER THREE IN LOVE CONCERT 草蜢演唱会 2026 - 新加坡站",
+        "artist": "草蜢",
+        "city": "新加坡",
+        "date": "2026.06.20",
+        "venue": "新加坡室内体育馆",
+        "projectId": null
+      },
+      "score": 78.56,
+      "titleSimilarity": 0.633,
+      "venueSimilarity": 0.273,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_694b5e4336adfa0001bc41f8",
+        "title": "ZUTOMAYO INTENSE II「坐・ZOMBIE CRAB LABO」-首尔站",
+        "artist": "ZUTOMAYO INTENSE II",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "高丽大学华亭老虎体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_695c76ded0b5ae0001145859",
+        "title": "Central Cee – CAN’T RUSH GREATNESS 2026亚洲巡演-首尔站",
+        "artist": "",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "KINTEX Hall 9",
+        "projectId": null
+      },
+      "score": 78.24,
+      "titleSimilarity": 0.73,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69aa573d2366290001d579d8",
+        "title": "Laufey: A Matter of Time巡演-曼谷站",
+        "artist": "Laufey",
+        "city": "泰国",
+        "date": "2026.05.31",
+        "venue": "Impact会展中心",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69f2e8bb357a4100019e975a",
+        "title": "LingOrm Birthday Fan Party-曼谷站",
+        "artist": "",
+        "city": "泰国",
+        "date": "2026.05.31",
+        "venue": "UOB LIVE",
+        "projectId": null
+      },
+      "score": 78,
+      "titleSimilarity": 0.68,
+      "venueSimilarity": 0.1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6976f3ac61d1c20001c88b8b",
+        "title": "JANICE VIDAL卫兰OUT OF FRAME世界巡回演唱会-澳门站",
+        "artist": "卫兰",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6986a9eb2c341f00015f7a2b",
+        "title": "2026 Apink亚洲巡演 <The Origin: APINK>-澳门站",
+        "artist": "2026 Apink亚洲",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门百老汇舞台",
+        "projectId": null
+      },
+      "score": 77.86,
+      "titleSimilarity": 0.6,
+      "venueSimilarity": 0.286,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6a02aaabbb594300011da456",
+        "title": "2026 FTISLAND TOUR 0 — XIX — lll 'FaTe'-澳门站",
+        "artist": "FTISLAND",
+        "city": "中国澳门",
+        "date": "2026.06.13",
+        "venue": "伦敦人剧场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69a948cffb066600015ece80",
+        "title": "卢冠廷「My Music · My Life一生所爱」演唱会-澳门站",
+        "artist": "卢冠廷",
+        "city": "中国澳门",
+        "date": "2026.06.13",
+        "venue": "伦敦人综艺馆",
+        "projectId": null
+      },
+      "score": 77.5,
+      "titleSimilarity": 0.5,
+      "venueSimilarity": 0.5,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69f2e373357a4100019e2375",
+        "title": "2026 ALPHA DRIVE ONE 粉丝见面会巡回［STAR ROAD］-香港站",
+        "artist": "2026 ALPHA DRIVE ONE",
+        "city": "中国香港",
+        "date": "2026.07.11",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69f58d45d10d1900014a9216",
+        "title": "【&TEAM】2026 &TEAM 演唱会巡回《BLAZE THE WAY》-香港站",
+        "artist": "TEAM",
+        "city": "中国香港",
+        "date": "2026.07.11",
+        "venue": "亚洲国际博览馆11号馆",
+        "projectId": null
+      },
+      "score": 77.47,
+      "titleSimilarity": 0.444,
+      "venueSimilarity": 0.636,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_690c0987160ddd0001569c26",
+        "title": "2025-26 TREASURE 巡回演唱会[PULSE ON]-澳门站",
+        "artist": "TREASURE",
+        "city": "中国澳门",
+        "date": "2026.03.06",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_68c8fdc8318ce700016f0b5d",
+        "title": "[2025-26 AESPA LIVE Tour -Synk：Aexis Line-] 巡演-澳门站",
+        "artist": "aespa",
+        "city": "中国澳门",
+        "date": "2026.03.07-2026.03.08",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "score": 76.55,
+      "titleSimilarity": 0.88,
+      "venueSimilarity": 0.455,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6a069a9de31b8400017b934d",
+        "title": "JIMMYSEA DREAMSCAPE粉丝演唱会-香港站",
+        "artist": "JIMMYSEA DREAMSCAPE粉丝",
+        "city": "中国香港",
+        "date": "2026.07.18",
+        "venue": "安盛创梦馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69d603b97c83af000116ddfb",
+        "title": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会-香港站",
+        "artist": "LiSA",
+        "city": "中国香港",
+        "date": "2026.07.18",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "score": 76.11,
+      "titleSimilarity": 0.6,
+      "venueSimilarity": 0.111,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69ba576350288d000108f71f",
+        "title": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+        "artist": "ITZY",
+        "city": "中国香港",
+        "date": "2026.06.20",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69bb61820d0fbe00013d1c2d",
+        "title": "2026 I.O.I <LOOP> 巡回演唱会-香港站",
+        "artist": "I.O.I",
+        "city": "中国香港",
+        "date": "2026.06.20",
+        "venue": "亚洲国际博览馆10号馆",
+        "projectId": null
+      },
+      "score": 75.89,
+      "titleSimilarity": 0.381,
+      "venueSimilarity": 0.636,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6976f3ac61d1c20001c88b8b",
+        "title": "JANICE VIDAL卫兰OUT OF FRAME世界巡回演唱会-澳门站",
+        "artist": "卫兰",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次巡回演唱会“INTO THE WISH: Our WISH”-澳门站",
+        "artist": "NCT WISH 第一次",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "score": 75.38,
+      "titleSimilarity": 0.433,
+      "venueSimilarity": 0.455,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69ce0ac72d7b240001e407e5",
+        "title": "Daniel Caesar - Son of Spergy巡演-高阳站",
+        "artist": "Daniel Caesar",
+        "city": "韩国",
+        "date": "2026-05-29",
+        "venue": "韩国国际会展中心 10号展厅",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69ddf3a2477a140001bc58e4",
+        "title": "- The Trilogy I - 2026 SHINee WORLD VIII : [THE INVERT]-首尔站",
+        "artist": "SHINee",
+        "city": "韩国",
+        "date": "2026.05.29",
+        "venue": "首尔奥林匹克体操竞技场",
+        "projectId": null
+      },
+      "score": 75.18,
+      "titleSimilarity": 0.607,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_68c8fdc8318ce700016f0b5d",
+        "title": "[2025-26 AESPA LIVE Tour -Synk：Aexis Line-] 巡演-澳门站",
+        "artist": "aespa",
+        "city": "中国澳门",
+        "date": "2026.03.07-2026.03.08",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6965adb66ee656000186b09f",
+        "title": "金钟大巡回演唱会<Arcadia>-澳门站",
+        "artist": "金钟大",
+        "city": "中国澳门",
+        "date": "2026.03.08",
+        "venue": "澳门百老汇舞台",
+        "projectId": null
+      },
+      "score": 74.86,
+      "titleSimilarity": 0.88,
+      "venueSimilarity": 0.286,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6976f3ac61d1c20001c88b8b",
+        "title": "JANICE VIDAL卫兰OUT OF FRAME世界巡回演唱会-澳门站",
+        "artist": "卫兰",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次世界巡回演唱会「INTO THE WISH : Our WISH」-澳门站",
+        "artist": "NCT WISH",
+        "city": "中国澳门",
+        "date": "2026.03.21-2026.03.22",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "score": 74.7,
+      "titleSimilarity": 0.406,
+      "venueSimilarity": 0.455,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_693241d85085ae0001d0357e",
+        "title": "tuki. 2026亚洲巡演-香港站",
+        "artist": "",
+        "city": "中国香港",
+        "date": "2026.05.09",
+        "venue": "亚洲国际博览馆11号馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_6927baeb78c7ea000131be03",
+        "title": "2025-26 TREASURE TOUR [PULSE ON] -香港站",
+        "artist": "TREASURE",
+        "city": "中国香港",
+        "date": "2026.05.09",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "score": 74.7,
+      "titleSimilarity": 0.333,
+      "venueSimilarity": 0.636,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_69532a952a951f00010ace36",
+        "title": "Supper Moment 「谢谢你啊世界」 深圳演唱会",
+        "artist": "Supper Moment",
+        "city": "深圳",
+        "date": "2026.03.07",
+        "venue": "华润深圳湾体育中心＂春茧＂体育馆 ",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_6909a41a5588b30001e5f38d",
+        "title": "Jolin蔡依林Pleasure(愉悦主义） 巡回演唱会2026",
+        "artist": "蔡依林",
+        "city": "深圳",
+        "date": "2026.03.07-2026.03.08",
+        "venue": "深圳大运中心体育场",
+        "projectId": null
+      },
+      "score": 73.98,
+      "titleSimilarity": 0.409,
+      "venueSimilarity": 0.375,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69cf98fc59827a000197e71d",
+        "title": "罗志祥 SHOW LO 30th World Tour Concert - 香港站",
+        "artist": "罗志祥",
+        "city": "中国香港",
+        "date": "2026.06.13",
+        "venue": "红磡香港体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69e188c9c50af2000153d10c",
+        "title": "PONDPHUWIN RENDEZVOUS粉丝见面会-香港站",
+        "artist": "PONDPHUWIN RENDEZVOUS",
+        "city": "中国香港",
+        "date": "2026.06.13",
+        "venue": "安盛创梦馆",
+        "projectId": null
+      },
+      "score": 73.93,
+      "titleSimilarity": 0.5,
+      "venueSimilarity": 0.143,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6982b78cfd093f0001381371",
+        "title": "ARTMS 世界巡回演唱会 ＜Grand Club Icarus＞-澳门站",
+        "artist": "ARTMS",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门银河-G Box",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6989aa29bfffb2000184ac52",
+        "title": "MARK段宜恩 < Silhouette: The Shape Of You > FANCON 安可场-澳门站",
+        "artist": "MARK段宜恩",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门新濠影汇综艺馆",
+        "projectId": null
+      },
+      "score": 73.81,
+      "titleSimilarity": 0.463,
+      "venueSimilarity": 0.222,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": true,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "product_variant_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69a122573700710001eb9b58",
+        "title": "伍佰 Wu Bai & China Blue Rock Star 2 世界巡回演唱会-澳门站",
+        "artist": "伍佰",
+        "city": "中国澳门",
+        "date": "2026.06.06",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69f4686ed10d19000138b141",
+        "title": "iKON FOUREVER 巡回演唱会-澳门站",
+        "artist": "iKON",
+        "city": "中国澳门",
+        "date": "2026.06.06",
+        "venue": "澳门百老汇舞台",
+        "projectId": null
+      },
+      "score": 73.57,
+      "titleSimilarity": 0.429,
+      "venueSimilarity": 0.286,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_694b5e4336adfa0001bc41f8",
+        "title": "ZUTOMAYO INTENSE II「坐・ZOMBIE CRAB LABO」-首尔站",
+        "artist": "ZUTOMAYO INTENSE II",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "高丽大学华亭老虎体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6978989eae021000010391e2",
+        "title": "ILLIT ‘PRESS START♥’演唱会-首尔站",
+        "artist": "",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "奥林匹克手球体育馆",
+        "projectId": null
+      },
+      "score": 73.54,
+      "titleSimilarity": 0.432,
+      "venueSimilarity": 0.273,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次巡回演唱会“INTO THE WISH: Our WISH”-澳门站",
+        "artist": "NCT WISH 第一次",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6986a9eb2c341f00015f7a2b",
+        "title": "2026 Apink亚洲巡演 <The Origin: APINK>-澳门站",
+        "artist": "2026 Apink亚洲",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门百老汇舞台",
+        "projectId": null
+      },
+      "score": 73.48,
+      "titleSimilarity": 0.467,
+      "venueSimilarity": 0.182,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69536c086d117d00015e542a",
+        "title": "PRYVT '重返现实' 世界巡演-新加坡站",
+        "artist": "",
+        "city": "新加坡",
+        "date": "2026.02.11",
+        "venue": "新加坡滨海艺术中心剧院",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_693a639305b2da0001a6f542",
+        "title": "MIDNIGHT TIL MORNING 世界巡回演唱会 2026-新加坡站",
+        "artist": "MIDNIGHT TIL MORNING",
+        "city": "新加坡",
+        "date": "2026.02.11",
+        "venue": "星和滨海艺术中心剧院",
+        "projectId": null
+      },
+      "score": 73.23,
+      "titleSimilarity": 0.238,
+      "venueSimilarity": 0.727,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6981b6603d498600016596ab",
+        "title": "张与辰The Novara Ball演唱会-澳门站",
+        "artist": "张与辰The Novara Ball",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门葡京人H853娱乐馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6982b78cfd093f0001381371",
+        "title": "ARTMS 世界巡回演唱会 ＜Grand Club Icarus＞-澳门站",
+        "artist": "ARTMS",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门银河-G Box",
+        "projectId": null
+      },
+      "score": 73.13,
+      "titleSimilarity": 0.458,
+      "venueSimilarity": 0.167,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69fc34044396c500016d9784",
+        "title": "U-KNOW PROJECT 26 : SCENE#1-首尔站",
+        "artist": "U-KNOW",
+        "city": "韩国",
+        "date": "2026.07.17",
+        "venue": "奥林匹克手球体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69e0560e3000f10001ee75f9",
+        "title": "natori ONE-MAN LIVE TOUR ‘Koshin (March)’-首尔站",
+        "artist": "natori",
+        "city": "韩国",
+        "date": "2026-07-18",
+        "venue": "奥林匹克体育馆",
+        "projectId": null
+      },
+      "score": 73,
+      "titleSimilarity": 0.609,
+      "venueSimilarity": 0.778,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6986a9eb2c341f00015f7a2b",
+        "title": "2026 Apink亚洲巡演 <The Origin: APINK>-澳门站",
+        "artist": "2026 Apink亚洲",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门百老汇舞台",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_69129cbe756c660001710fa3",
+        "title": "NCT WISH 第一次世界巡回演唱会「INTO THE WISH : Our WISH」-澳门站",
+        "artist": "NCT WISH",
+        "city": "中国澳门",
+        "date": "2026.03.21-2026.03.22",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "score": 72.76,
+      "titleSimilarity": 0.438,
+      "venueSimilarity": 0.182,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69ae7600d52ad2000193d5d0",
+        "title": "陈晓东 NEON Reflections 30 演唱会-香港站",
+        "artist": "陈晓东",
+        "city": "中国香港",
+        "date": "2026.06.19",
+        "venue": "红磡香港体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6a110f61ecfb19000101558b",
+        "title": "GLUTAMINE ONEMAN LIVE-香港站",
+        "artist": "GLUTAMINE ONEMAN",
+        "city": "中国香港",
+        "date": "2026.06.19",
+        "venue": "PORTAL",
+        "projectId": null
+      },
+      "score": 72.5,
+      "titleSimilarity": 0.5,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69f1e6c4357a4100018e9727",
+        "title": "5SOS: EVERYONE’S A STAR! 世界巡回演唱会-曼谷站",
+        "artist": "5SOS",
+        "city": "泰国",
+        "date": "2026.11.09",
+        "venue": "UOB LIVE",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69c1fb9f0d0fbe0001bcba3b",
+        "title": "LANY : soft world 巡回演唱会-曼谷站",
+        "artist": "LANY",
+        "city": "泰国",
+        "date": "2026.11.10",
+        "venue": "UOB LIVE",
+        "projectId": null
+      },
+      "score": 72.5,
+      "titleSimilarity": 0.5,
+      "venueSimilarity": 1,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6976f3ac61d1c20001c88b8b",
+        "title": "JANICE VIDAL卫兰OUT OF FRAME世界巡回演唱会-澳门站",
+        "artist": "卫兰",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69782affae02100001faaff7",
+        "title": "LenaMiu 1st 粉丝见面会-澳门站",
+        "artist": "LenaMiu 1st",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门旅游塔四楼剧院",
+        "projectId": null
+      },
+      "score": 72.22,
+      "titleSimilarity": 0.4,
+      "venueSimilarity": 0.222,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69df4905e570cf0001b30561",
+        "title": "【群星】2026 Weverse音乐节（Weverse Con）-首尔站",
+        "artist": "",
+        "city": "韩国",
+        "date": "2026.06.06",
+        "venue": "首尔奥林匹克体操竞技场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6a02d96dc216790001f9feab",
+        "title": "2026 FTISLAND TOUR 0 — XIX — lll 'FaTe' -首尔站",
+        "artist": "FTISLAND",
+        "city": "韩国",
+        "date": "2026.06.06",
+        "venue": "KBS Arena",
+        "projectId": null
+      },
+      "score": 71.96,
+      "titleSimilarity": 0.478,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69a11aad3700710001eaa2b5",
+        "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-曼谷站",
+        "artist": "CNBLUE",
+        "city": "泰国",
+        "date": "2026.06.06",
+        "venue": "雷霆穹顶体育场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69cb4258df9ab2000150a687",
+        "title": "LMSY BE MY ROMANCE粉丝见面演唱会-曼谷站",
+        "artist": "LMSY BE MY ROMANCE粉丝见面",
+        "city": "泰国",
+        "date": "2026.06.06",
+        "venue": "True Icon Hall - Iconsiam",
+        "projectId": null
+      },
+      "score": 71.9,
+      "titleSimilarity": 0.476,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69cf92392d7b24000103c172",
+        "title": "CLOSE YOUR EYES 1ST TOUR [BEYOND YOUR EYES] - 香港站",
+        "artist": "CLOSE YOUR EYES 1ST",
+        "city": "中国香港",
+        "date": "2026.05.30",
+        "venue": "亚洲国际博览馆11号馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69e6d8845641520001060547",
+        "title": "花谱｜宿声-香港站",
+        "artist": "花谱",
+        "city": "中国香港",
+        "date": "2026.05.30",
+        "venue": "亚洲国际博览馆10号馆",
+        "projectId": null
+      },
+      "score": 71.87,
+      "titleSimilarity": 0.111,
+      "venueSimilarity": 0.909,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": true,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_694a311aaad5830001eff121",
+        "title": "ATEEZ 2026世界巡回演唱会[IN YOUR FANTASY] -澳门站",
+        "artist": "ATEEZ",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6981b6603d498600016596ab",
+        "title": "张与辰The Novara Ball演唱会-澳门站",
+        "artist": "张与辰The Novara Ball",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门葡京人H853娱乐馆",
+        "projectId": null
+      },
+      "score": 71.67,
+      "titleSimilarity": 0.333,
+      "venueSimilarity": 0.333,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69a11aad3700710001eaa2b5",
+        "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-曼谷站",
+        "artist": "CNBLUE",
+        "city": "泰国",
+        "date": "2026.06.06",
+        "venue": "雷霆穹顶体育场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69d8802a469c9f0001ac6974",
+        "title": "2026 I.O.I <LOOP> 巡回演唱会-曼谷站",
+        "artist": "I.O.I",
+        "city": "泰国",
+        "date": "2026.06.06",
+        "venue": "IDEA LIVE曼谷",
+        "projectId": null
+      },
+      "score": 71.54,
+      "titleSimilarity": 0.462,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69ae7600d52ad2000193d5d0",
+        "title": "陈晓东 NEON Reflections 30 演唱会-香港站",
+        "artist": "陈晓东",
+        "city": "中国香港",
+        "date": "2026.06.19",
+        "venue": "红磡香港体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69ba576350288d000108f71f",
+        "title": "ITZY 3RD 世界巡回演唱会<TUNNEL VISION>-香港站",
+        "artist": "ITZY",
+        "city": "中国香港",
+        "date": "2026.06.20",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "score": 71.52,
+      "titleSimilarity": 0.727,
+      "venueSimilarity": 0.333,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_695ca68fd0b5ae0001190adf",
+        "title": "《b.balance呈献 拉阔音乐会｜<3少于三｜MC 张天赋 x CONSTANCE x Gareth.T》-香港站",
+        "artist": "",
+        "city": "中国香港",
+        "date": "2026.05.16",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69842048bed3500001a6cd06",
+        "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-香港站",
+        "artist": "",
+        "city": "中国香港",
+        "date": "2026.05.16",
+        "venue": "亚洲国际博览馆 Summit",
+        "projectId": null
+      },
+      "score": 71.36,
+      "titleSimilarity": 0.239,
+      "venueSimilarity": 0.538,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_6976f0b961d1c20001c83654",
+        "title": "2026 8TURN [ETERNAL FLAME] 演唱会-澳门站",
+        "artist": "2026 8TURN",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河-G Box",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_69782affae02100001faaff7",
+        "title": "LenaMiu 1st 粉丝见面会-澳门站",
+        "artist": "LenaMiu 1st",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门旅游塔四楼剧院",
+        "projectId": null
+      },
+      "score": 71.15,
+      "titleSimilarity": 0.357,
+      "venueSimilarity": 0.222,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_694e14cf4f31bc0001d7ef8b",
+        "title": "「Best,茹果我不唱情歌」梁静茹巡回演唱会",
+        "artist": "梁静茹",
+        "city": "武汉",
+        "date": "2026.04.11",
+        "venue": "武汉五环体育中心体育场",
+        "projectId": null
+      },
+      "right": {
+        "id": "mt_697c23313139d600013f5a45",
+        "title": "Evolution Nic Live 谢霆锋进化演唱会",
+        "artist": "谢霆锋",
+        "city": "武汉",
+        "date": "2026.04.11-2026.04.12",
+        "venue": "武汉体育中心主体育场",
+        "projectId": null
+      },
+      "score": 71.12,
+      "titleSimilarity": 0.118,
+      "venueSimilarity": 0.818,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": true,
+      "conflictReasons": [
+        "date_range_conflict",
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_6976f3ac61d1c20001c88b8b",
+        "title": "JANICE VIDAL卫兰OUT OF FRAME世界巡回演唱会-澳门站",
+        "artist": "卫兰",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6976f0b961d1c20001c83654",
+        "title": "2026 8TURN [ETERNAL FLAME] 演唱会-澳门站",
+        "artist": "2026 8TURN",
+        "city": "中国澳门",
+        "date": "2026.03.21",
+        "venue": "澳门银河-G Box",
+        "projectId": null
+      },
+      "score": 71,
+      "titleSimilarity": 0.24,
+      "venueSimilarity": 0.5,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69ccbe8812aa2000018ceebb",
+        "title": "LiSA‘LiVE is Smile Always～15～’亚洲巡回演唱会 - 首尔站",
+        "artist": "LiSA",
+        "city": "韩国",
+        "date": "2026.08.01",
+        "venue": "奥林匹克体育馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6a02d946c216790001f9fd8a",
+        "title": "Novelbright 2026亚洲巡回演唱会〜PYRAMID-首尔站",
+        "artist": "Novelbright",
+        "city": "韩国",
+        "date": "2026.08.01",
+        "venue": "韩国国际会展中心 10号展厅",
+        "projectId": null
+      },
+      "score": 71,
+      "titleSimilarity": 0.44,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_695c76ded0b5ae0001145859",
+        "title": "Central Cee – CAN’T RUSH GREATNESS 2026亚洲巡演-首尔站",
+        "artist": "",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "KINTEX Hall 9",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6978989eae021000010391e2",
+        "title": "ILLIT ‘PRESS START♥’演唱会-首尔站",
+        "artist": "",
+        "city": "韩国",
+        "date": "2026.03.14",
+        "venue": "奥林匹克手球体育馆",
+        "projectId": null
+      },
+      "score": 70.94,
+      "titleSimilarity": 0.438,
+      "venueSimilarity": 0,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": false,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mt_694a311aaad5830001eff121",
+        "title": "ATEEZ 2026世界巡回演唱会[IN YOUR FANTASY] -澳门站",
+        "artist": "ATEEZ",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "澳门威尼斯人金光综艺馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_6970385761d1c200013483ec",
+        "title": "王菀之演唱会2026-澳门站",
+        "artist": "王菀之",
+        "city": "中国澳门",
+        "date": "2026.03.28",
+        "venue": "伦敦人综艺馆",
+        "projectId": null
+      },
+      "score": 70.78,
+      "titleSimilarity": 0.286,
+      "venueSimilarity": 0.364,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": true,
+      "dateNear": false,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    },
+    {
+      "left": {
+        "id": "mtglobal_69782bf79fcede00012e6d48",
+        "title": "A State of Trance-香港站",
+        "artist": "A State of Trance",
+        "city": "中国香港",
+        "date": "2026.06.12",
+        "venue": "亚洲国际博览馆3号馆",
+        "projectId": null
+      },
+      "right": {
+        "id": "mtglobal_697ad149f6ce170001e3fd4a",
+        "title": "EXO PLANET #6 - EXhOrizON 2026亚洲巡回演唱会-香港站",
+        "artist": "EXO",
+        "city": "中国香港",
+        "date": "2026.06.13",
+        "venue": "亚洲国际博览馆",
+        "projectId": null
+      },
+      "score": 70.54,
+      "titleSimilarity": 0.542,
+      "venueSimilarity": 0.7,
+      "artistOverlap": 0,
+      "cityMatched": true,
+      "dateExact": false,
+      "dateNear": true,
+      "strongAnchor": false,
+      "artistConflict": true,
+      "productVariantConflict": false,
+      "dateRangeConflict": false,
+      "conflictReasons": [
+        "artist_conflict"
+      ],
+      "recommendedAction": "review"
+    }
+  ]
+}

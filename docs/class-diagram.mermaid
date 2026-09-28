@@ -1,0 +1,83 @@
+classDiagram
+    class ProxyPool {
+        <<module singleton>>
+        -healthyPool: string[]
+        -currentNode: string | null
+        -cooldownMap: Map~string, number~
+        -poolPrepared: boolean
+        -currentSource: string | null
+        +prepareProxyPool(source) Promise~void~
+        +getCurrentProxyAgent() HttpsProxyAgent | null
+        +handleNodeFailure(error) Promise~void~
+        +getPoolStatus() PoolStatus
+        +getCurrentNode() string | null
+        -checkNodeHealth(nodeName, testUrl, timeout) Promise~number | null~
+        -buildHealthyPool(options) Promise~string[]~
+        -switchNode(nodeName) Promise~void~
+        -rotateToNextNode() Promise~string | null~
+        -markNodeCooldown(nodeName, durationMs) void
+        -isNodeAvailable(nodeName) boolean
+        -clashApi(path, method, body) Promise~any~
+        -extractRegion(nodeName) string
+        -scoreNode(nodeName, latency, source) number
+    }
+
+    class PoolStatus {
+        +healthyCount: number
+        +cooldownCount: number
+        +currentNode: string | null
+        +healthyNodes: string[]
+        +cooldownNodes: CooldownEntry[]
+    }
+
+    class CooldownEntry {
+        +name: string
+        +until: number
+    }
+
+    class BuildPoolOptions {
+        +source: string
+        +topN: number
+        +testUrl: string
+        +timeout: number
+    }
+
+    class REGION_PREFERENCE {
+        <<const>>
+        +damai: string[]
+        +moretickets: string[]
+        +moretickets-global: string[]
+    }
+
+    class ProxyAgentModule {
+        <<refactored>>
+        +getProxyAgent() HttpsProxyAgent | null
+        +PROXY_CONFIG: object
+        -ensureHttpsProxyAgent() HttpsProxyAgent | null
+        -ensureGlobalDispatcher() void
+    }
+
+    class ProxyRetryModule {
+        <<updated>>
+        +isProxyError(err) boolean
+        +withProxyRetry(fn, options) Promise~T~
+        +handleProxyFailure(err) Promise~void~
+    }
+
+    class DamaiCrawlerModule {
+        <<updated>>
+        +UA_POOL: string[]
+        +getUAForCity(cityName) string
+        +getRandomAcceptLanguage() string
+        +syncData(config) Promise~SyncResult~
+        -fetchCity(city, index, cancelled) Promise~Concert[]~
+        -makeRequest(api, dataObj, callbackName, retryCount, cancelled) Promise~any~
+    }
+
+    ProxyPool --> PoolStatus : returns
+    ProxyPool --> BuildPoolOptions : uses
+    ProxyPool ..> REGION_PREFERENCE : reads
+    ProxyAgentModule --> ProxyPool : calls getCurrentProxyAgent
+    ProxyRetryModule --> ProxyPool : calls handleNodeFailure
+    DamaiCrawlerModule --> ProxyPool : calls handleNodeFailure, markNodeCooldown
+    DamaiCrawlerModule --> ProxyAgentModule : calls getProxyAgent

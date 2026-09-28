@@ -7,7 +7,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "crawl": "tsx scripts/crawl_and_upload.ts"
+    "crawl": "tsx scripts/crawl_and_upload.ts",
+    "backfill:identity": "tsx scripts/backfill_concert_identity.ts",
+    "report:dedup-candidates": "tsx scripts/report_dedup_candidates.ts",
+    "report:data-quality-samples": "tsx scripts/report_data_quality_samples.ts",
+    "report:score-distribution": "tsx scripts/report_opportunity_score_distribution.ts",
+    "report:backfill-comparison": "tsx scripts/report_backfill_comparison.ts",
+    "test:dedup": "tsx scripts/test_dedup_regression.ts",
+    "test:artist-identity": "tsx scripts/test_artist_identity_regression.ts",
+    "test:score": "tsx scripts/test_opportunity_score_regression.ts",
+    "test:location": "tsx scripts/test_location_normalization_regression.ts",
+    "test:crawl-progress": "tsx scripts/test_crawl_progress.ts",
+    "test:proxy-retry": "tsx scripts/test_proxy_retry.ts",
+    "pre-publish-check": "tsx scripts/pre-publish-check.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -21,6 +33,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "https-proxy-agent": "^9.1.0",
     "lucide-react": "^0.563.0",
     "next": "16.1.5",
     "opencc-js": "^1.0.5",
@@ -34,6 +47,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "undici": "^8.5.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

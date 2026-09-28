@@ -1,8 +1,13 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any, prefer-const */
 import https from 'https';
 import { Concert, CITY_BLACKLIST } from './damai-crawler';
 import * as OpenCC from 'opencc-js';
 import crypto from 'crypto';
+// Proxy support: route every outbound request through the configured proxy.
+import { getProxyAgent } from './proxy-agent';
+// Proxy-aware retry: retry on ECONNRESET/ECONNREFUSED/ETIMEDOUT.
+import { withProxyRetry } from './proxy-retry';
 
 // Initialize converter: Traditional -> Simplified
 // from 'hk' (Hong Kong Traditional) to 'cn' (Mainland Simplified)
@@ -58,55 +63,69 @@ function getBackoffMs(retryCount: number): number {
     return Math.min(800 * Math.pow(2, retryCount), 6000) + Math.floor(Math.random() * 400);
 }
 
+/**
+ * Make an HTTP request to the MoreTickets Global API.
+ *
+ * The core https.request Promise is wrapped in withProxyRetry so that
+ * proxy-level failures (ECONNRESET, ECONNREFUSED, ETIMEDOUT) are retried
+ * independently of the application-level retry logic (5xx, parse errors).
+ */
 function makeRequest(path: string, method: 'GET' | 'POST', headers: Record<string, string> = {}, retryCount = 0): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: CONFIG.baseUrl,
-            path: path,
-            method: method,
-            headers: {
-                ...CONFIG.headers,
-                ...headers
-            }
-        };
+    return withProxyRetry(() => {
+        return new Promise((resolve, reject) => {
+            const options: https.RequestOptions = {
+                hostname: CONFIG.baseUrl,
+                path: path,
+                method: method,
+                headers: {
+                    ...CONFIG.headers,
+                    ...headers
+                },
+                // Route through the configured HTTP proxy (null => default agent).
+                agent: getProxyAgent() ?? undefined,
+            };
 
-        const retryWithBackoff = (reason: string) => {
-            if (retryCount >= REQUEST_MAX_RETRY) {
-                reject(new Error(`[MoreTickets-Global] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
-                return;
-            }
-            const nextAttempt = retryCount + 1;
-            const waitMs = getBackoffMs(retryCount);
-            console.warn(`[MoreTickets-Global] ${reason}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
-            setTimeout(() => {
-                resolve(makeRequest(path, method, headers, nextAttempt));
-            }, waitMs);
-        };
-
-        const req = https.request(options, (res) => {
-            const statusCode = res.statusCode || 0;
-            if (statusCode >= 500) {
-                retryWithBackoff(`HTTP ${statusCode}`);
-                return;
-            }
-            const chunks: Buffer[] = [];
-            res.on('data', chunk => chunks.push(chunk));
-            res.on('end', () => {
-                const body = Buffer.concat(chunks).toString();
-                try {
-                    const json = JSON.parse(body);
-                    resolve(json);
-                } catch (e) {
-                    retryWithBackoff(`Failed to parse response: ${body.substring(0, 100)}...`);
+            const retryWithBackoff = (reason: string) => {
+                if (retryCount >= REQUEST_MAX_RETRY) {
+                    reject(new Error(`[MoreTickets-Global] ${reason} | reached max retry ${REQUEST_MAX_RETRY}`));
+                    return;
                 }
-            });
-        });
+                const nextAttempt = retryCount + 1;
+                const waitMs = getBackoffMs(retryCount);
+                console.warn(`[MoreTickets-Global] ${reason}, retrying in ${waitMs}ms (attempt ${nextAttempt}/${REQUEST_MAX_RETRY})`);
+                setTimeout(() => {
+                    resolve(makeRequest(path, method, headers, nextAttempt));
+                }, waitMs);
+            };
 
-        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
-            req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+            const req = https.request(options, (res) => {
+                const statusCode = res.statusCode || 0;
+                if (statusCode >= 500) {
+                    retryWithBackoff(`HTTP ${statusCode}`);
+                    return;
+                }
+                const chunks: Buffer[] = [];
+                res.on('data', chunk => chunks.push(chunk));
+                res.on('end', () => {
+                    const body = Buffer.concat(chunks).toString();
+                    try {
+                        const json = JSON.parse(body);
+                        resolve(json);
+                    } catch (e) {
+                        retryWithBackoff(`Failed to parse response: ${body.substring(0, 100)}...`);
+                    }
+                });
+            });
+
+            req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+                req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms`));
+            });
+            req.on('error', (err: any) => {
+                // Reject so withProxyRetry can classify and retry proxy errors.
+                reject(err);
+            });
+            req.end();
         });
-        req.on('error', (err: any) => retryWithBackoff(err.message || 'Network error'));
-        req.end();
     });
 }
 
@@ -124,6 +143,80 @@ export async function fetchGlobalLocations(): Promise<GlobalLocation[]> {
         console.error('Failed to fetch global locations:', e);
         return [];
     }
+}
+
+/**
+ * Fetch all concerts for a single global location.
+ *
+ * Paginates through the location's show list (up to 100 items) and transforms
+ * each item into a Concert.  Internal logic is unchanged from the original
+ * serial implementation.
+ */
+async function fetchMoreTicketsGlobalLocation(loc: GlobalLocation): Promise<Concert[]> {
+    const concerts: Concert[] = [];
+    let offset = 0;
+    const length = 20;
+    let hasMore = true;
+
+    // Category ID for Concerts seems fixed: 668fa364407ad90001885db2
+    const categoryId = '668fa364407ad90001885db2';
+
+    while (hasMore) {
+        // URL: /pub/home/v2/show/list?locationId=...&categoryId=...&sorting=HOT_WEIGHT&offset=...&length=...
+        const path = `/pub/home/v2/show/list?locationId=${loc.id}&categoryId=${categoryId}&sorting=HOT_WEIGHT&offset=${offset}&length=${length}`;
+
+        try {
+            // We need to inject locationid header? The curl command showed it.
+            // It might be required for the API to return correct currency/language.
+            const headers = {
+                'locationid': loc.id,
+                'locationcityid': loc.id // Just in case
+            };
+
+            const res = await makeRequest(path, 'GET', headers);
+
+            if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
+                const items = res.data;
+                if (items.length === 0) {
+                    hasMore = false;
+                    break;
+                }
+
+                for (const item of items) {
+                    const concert = transformToConcert(item, loc.name);
+                    // Filter against BLACKLIST (Double check)
+                    // Note: concert.city is now Simplified Chinese.
+                    const isBlacklisted = CITY_BLACKLIST.some(b => concert.city.includes(b));
+
+                    // BUT wait, we just un-blacklisted Korea/etc. 
+                    // The CITY_BLACKLIST is now a "Exclude List".
+                    // If it is in blacklist, we skip.
+
+                    if (!isBlacklisted) {
+                        concerts.push(concert);
+                    }
+                }
+
+                // Pagination
+                if (items.length < length) {
+                    hasMore = false;
+                } else {
+                    offset += length;
+                    await new Promise(r => setTimeout(r, 200)); // Rate limit
+                }
+
+                // Safety break
+                if (offset > 100) hasMore = false; // Limit to top 100 per country to save time
+            } else {
+                hasMore = false;
+            }
+        } catch (e) {
+            console.error(`Error fetching ${loc.name} offset ${offset}:`, e);
+            hasMore = false;
+        }
+    }
+
+    return concerts;
 }
 
 export async function fetchMoreTicketsGlobalConcerts(onProgress?: (msg: string, progress?: number) => void): Promise<Concert[]> {
@@ -153,70 +246,35 @@ export async function fetchMoreTicketsGlobalConcerts(onProgress?: (msg: string, 
     
     console.log(`[MoreTickets-Global] Targeting ${targetLocations.length} locations (excluding Mainland China).`);
 
-    for (const [index, loc] of targetLocations.entries()) {
-        const percentage = Math.floor((index / targetLocations.length) * 100);
-        if (onProgress) onProgress(`[MoreTickets-Global] Fetching ${loc.name}...`, percentage);
-        
-        let offset = 0;
-        const length = 20;
-        let hasMore = true;
-        
-        // Category ID for Concerts seems fixed: 668fa364407ad90001885db2
-        const categoryId = '668fa364407ad90001885db2';
+    // Batch concurrent fetching: 8 locations per batch, 10s interval between batches.
+    const BATCH_SIZE = 8;
+    const BATCH_INTERVAL_MS = 10000;
 
-        while (hasMore) {
-            // URL: /pub/home/v2/show/list?locationId=...&categoryId=...&sorting=HOT_WEIGHT&offset=...&length=...
-            const path = `/pub/home/v2/show/list?locationId=${loc.id}&categoryId=${categoryId}&sorting=HOT_WEIGHT&offset=${offset}&length=${length}`;
-            
-            try {
-                // We need to inject locationid header? The curl command showed it.
-                // It might be required for the API to return correct currency/language.
-                const headers = {
-                    'locationid': loc.id,
-                    'locationcityid': loc.id // Just in case
-                };
+    for (let batchStart = 0; batchStart < targetLocations.length; batchStart += BATCH_SIZE) {
+        const batch = targetLocations.slice(batchStart, batchStart + BATCH_SIZE);
+        const batchIndex = Math.floor(batchStart / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(targetLocations.length / BATCH_SIZE);
 
-                const res = await makeRequest(path, 'GET', headers);
-                
-                if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
-                    const items = res.data;
-                    if (items.length === 0) {
-                        hasMore = false;
-                        break;
-                    }
+        const percentage = Math.floor((batchStart / targetLocations.length) * 100);
+        const batchNames = batch.map(l => l.name).join(', ');
+        if (onProgress) onProgress(`[MoreTickets-Global] Batch ${batchIndex}/${totalBatches}: ${batchNames}...`, percentage);
 
-                    for (const item of items) {
-                        const concert = transformToConcert(item, loc.name);
-                        // Filter against BLACKLIST (Double check)
-                        // Note: concert.city is now Simplified Chinese.
-                        const isBlacklisted = CITY_BLACKLIST.some(b => concert.city.includes(b));
-                        
-                        // BUT wait, we just un-blacklisted Korea/etc. 
-                        // The CITY_BLACKLIST is now a "Exclude List".
-                        // If it is in blacklist, we skip.
-                        
-                        if (!isBlacklisted) {
-                            allConcerts.push(concert);
-                        }
-                    }
+        const batchResults = await Promise.allSettled(
+            batch.map(loc => fetchMoreTicketsGlobalLocation(loc).catch(err => {
+                console.warn(`MoreTickets-Global ${loc.name} failed: ${err.message}`);
+                return [];
+            }))
+        );
 
-                    // Pagination
-                    if (items.length < length) {
-                        hasMore = false;
-                    } else {
-                        offset += length;
-                        await new Promise(r => setTimeout(r, 200)); // Rate limit
-                    }
-                    
-                    // Safety break
-                    if (offset > 100) hasMore = false; // Limit to top 100 per country to save time
-                } else {
-                    hasMore = false;
-                }
-            } catch (e) {
-                console.error(`Error fetching ${loc.name} offset ${offset}:`, e);
-                hasMore = false;
+        for (const result of batchResults) {
+            if (result.status === 'fulfilled') {
+                allConcerts.push(...result.value);
             }
+        }
+
+        if (batchStart + BATCH_SIZE < targetLocations.length) {
+            console.log(`[MoreTickets-Global] Batch ${batchIndex}/${totalBatches} done, waiting ${BATCH_INTERVAL_MS}ms before next batch...`);
+            await new Promise(r => setTimeout(r, BATCH_INTERVAL_MS));
         }
     }
 

@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { saveConcertsToStorage } from '../lib/db';
+import { replaceConcertsInStorage } from '../lib/db';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'concerts.json');
 
@@ -18,7 +18,7 @@ async function migrate() {
         const concerts = JSON.parse(content);
         console.log(`Loaded ${concerts.length} concerts.`);
 
-        await saveConcertsToStorage(concerts);
+        await replaceConcertsInStorage(concerts);
         console.log('Migration completed successfully!');
         
         // Verify

@@ -1,0 +1,276 @@
+{
+  "dryRun": true,
+  "readOnly": true,
+  "generatedAt": "2026-06-18T04:04:21.155Z",
+  "source": "db",
+  "databaseUrlHost": "localhost:55432",
+  "preBackfill": {
+    "total": 715,
+    "eventType": {
+      "unknown": 715
+    },
+    "artistSource": {
+      "unknown": 715
+    },
+    "artistConfidence": {
+      "zero": 715
+    },
+    "artistPrimaryCoverage": {
+      "has": 0,
+      "missing": 715,
+      "rate": 0
+    },
+    "artistAllCoverage": {
+      "has": 0,
+      "missing": 715,
+      "rate": 0
+    },
+    "rawTitleCleaned": false,
+    "lowConfidenceCount": 715
+  },
+  "postBackfill": {
+    "total": 714,
+    "eventType": {
+      "fan_meeting": 33,
+      "festival": 15,
+      "multi_artist": 9,
+      "solo": 565,
+      "tribute": 1,
+      "unknown": 91
+    },
+    "artistSource": {
+      "legacy": 604,
+      "rule": 5,
+      "unknown": 105
+    },
+    "artistConfidence": {
+      "mid": 609,
+      "zero": 105
+    },
+    "artistPrimaryCoverage": {
+      "has": 609,
+      "missing": 105,
+      "rate": 0.8529
+    },
+    "artistAllCoverage": {
+      "has": 609,
+      "missing": 105,
+      "rate": 0.8529
+    },
+    "rawTitleCleaned": false,
+    "lowConfidenceCount": 105,
+    "confidenceStats": {
+      "min": 0,
+      "max": 0.7,
+      "avg": 0.596
+    }
+  },
+  "delta": {
+    "total": -1,
+    "eventTypeUnknown": {
+      "before": 715,
+      "after": 91
+    },
+    "artistSourceUnknown": {
+      "before": 715,
+      "after": 105
+    },
+    "artistConfidenceZero": {
+      "before": 715,
+      "after": 105
+    },
+    "artistPrimaryCoverageRate": {
+      "before": 0,
+      "after": 0.8529
+    },
+    "artistAllCoverageRate": {
+      "before": 0,
+      "after": 0.8529
+    },
+    "lowConfidenceCount": {
+      "before": 715,
+      "after": 105
+    }
+  },
+  "samples": {
+    "successCases": [
+      {
+        "id": "mtglobal_69ddf3a2477a140001bc58e4",
+        "rawTitle": "- The Trilogy I - 2026 SHINee WORLD VIII : [THE INVERT]-首尔站",
+        "title": "- The Trilogy I - 2026 SHINee WORLD VIII : [THE INVERT]-首尔站",
+        "artist": "SHINee",
+        "artistPrimary": "SHINee",
+        "artistAll": [
+          "SHINee"
+        ],
+        "eventType": "solo",
+        "artistConfidence": 0.7,
+        "artistSource": "legacy",
+        "city": "韩国",
+        "venue": "首尔奥林匹克体操竞技场",
+        "eventDate": "2026-05-26",
+        "opportunityScore": 49,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mt_6912cc5aaabca500013155b1",
+        "rawTitle": "2025 陈小春 生·旦·净·末·丑 巡回演唱会",
+        "title": "2025 陈小春 生·旦·净·末·丑 巡回演唱会",
+        "artist": "陈小春",
+        "artistPrimary": "陈小春",
+        "artistAll": [
+          "陈小春"
+        ],
+        "eventType": "solo",
+        "artistConfidence": 0.7,
+        "artistSource": "legacy",
+        "city": "合肥",
+        "venue": "合肥少荃体育中心体育馆",
+        "eventDate": "2026-03-17",
+        "opportunityScore": 45,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mt_6969d7c58a7c6800013aeee5",
+        "rawTitle": "2025-2026 陈小春 生·旦·净·末·丑 巡回演唱会",
+        "title": "2025-2026 陈小春 生·旦·净·末·丑 巡回演唱会",
+        "artist": "陈小春",
+        "artistPrimary": "陈小春",
+        "artistAll": [
+          "陈小春"
+        ],
+        "eventType": "solo",
+        "artistConfidence": 0.7,
+        "artistSource": "legacy",
+        "city": "大连",
+        "venue": "大连体育中心体育馆",
+        "eventDate": "2026-04-07",
+        "opportunityScore": 45,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mt_69708343dc5cf70001287f44",
+        "rawTitle": "2025-2026 陈小春 生·旦·净·末·丑 巡回演唱会-诸暨站",
+        "title": "2025-2026 陈小春 生·旦·净·末·丑 巡回演唱会-诸暨站",
+        "artist": "陈小春",
+        "artistPrimary": "陈小春",
+        "artistAll": [
+          "陈小春"
+        ],
+        "eventType": "solo",
+        "artistConfidence": 0.7,
+        "artistSource": "legacy",
+        "city": "绍兴",
+        "venue": "西施篮球中心",
+        "eventDate": "2026-03-24",
+        "opportunityScore": 45,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mt_6953935b740ed10001654237",
+        "rawTitle": "2025-2026 陈小春 生·旦·净·末·丑巡回演唱会-收官站",
+        "title": "2025-2026 陈小春 生·旦·净·末·丑巡回演唱会-收官站",
+        "artist": "陈小春",
+        "artistPrimary": "陈小春",
+        "artistAll": [
+          "陈小春"
+        ],
+        "eventType": "solo",
+        "artistConfidence": 0.7,
+        "artistSource": "legacy",
+        "city": "上海",
+        "venue": "梅赛德斯-奔驰文化中心",
+        "eventDate": "2026-04-14",
+        "opportunityScore": 59,
+        "sourceUrl": ""
+      }
+    ],
+    "unknownCases": [
+      {
+        "id": "mtglobal_697c17866fdc6a00010e8070",
+        "rawTitle": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-新加坡站",
+        "title": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-新加坡站",
+        "artist": "",
+        "artistPrimary": "",
+        "artistAll": [],
+        "eventType": "unknown",
+        "artistConfidence": 0,
+        "artistSource": "unknown",
+        "city": "新加坡",
+        "venue": "新加坡新传媒剧院",
+        "eventDate": "2026-03-10",
+        "opportunityScore": 41,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mtglobal_697975679d90f5000142dacb",
+        "rawTitle": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-曼谷站",
+        "title": "10CM 权正烈 ＜To 10CM: Chapter 1＞ 2026 亚洲巡回演唱会-曼谷站",
+        "artist": "",
+        "artistPrimary": "",
+        "artistAll": [],
+        "eventType": "unknown",
+        "artistConfidence": 0,
+        "artistSource": "unknown",
+        "city": "泰国",
+        "venue": "凤凰大宴会厅",
+        "eventDate": "2026-03-03",
+        "opportunityScore": 33,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mtglobal_691e94ba081cd200013316f0",
+        "rawTitle": "2025–26 TREASURE TOUR [PULSE ON] -马尼拉站",
+        "title": "2025–26 TREASURE TOUR [PULSE ON] -马尼拉站",
+        "artist": "",
+        "artistPrimary": "",
+        "artistAll": [],
+        "eventType": "unknown",
+        "artistConfidence": 0,
+        "artistSource": "unknown",
+        "city": "菲律宾",
+        "venue": "SM Mall of Asia Arena",
+        "eventDate": "2026-04-14",
+        "opportunityScore": 39,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mtglobal_69855103d6051400011250a1",
+        "rawTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-吉隆坡站",
+        "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-吉隆坡站",
+        "artist": "",
+        "artistPrimary": "",
+        "artistAll": [],
+        "eventType": "unknown",
+        "artistConfidence": 0,
+        "artistSource": "unknown",
+        "city": "马来西亚",
+        "venue": "吉隆坡巨星竞技场",
+        "eventDate": "2026-04-07",
+        "opportunityScore": 39,
+        "sourceUrl": ""
+      },
+      {
+        "id": "mtglobal_6954e2c86d117d0001850937",
+        "rawTitle": "2026 CNBLUE “3LOGY”世界巡回演唱会-墨尔本站",
+        "title": "2026 CNBLUE “3LOGY”世界巡回演唱会-墨尔本站",
+        "artist": "",
+        "artistPrimary": "",
+        "artistAll": [],
+        "eventType": "unknown",
+        "artistConfidence": 0,
+        "artistSource": "unknown",
+        "city": "澳洲",
+        "venue": "派拉蒙剧院",
+        "eventDate": "2026-03-08",
+        "opportunityScore": 33,
+        "sourceUrl": ""
+      }
+    ]
+  },
+  "metadata": {
+    "note": "Pre-backfill state is reconstructed from historical pipeline records (all 715 legacy records had eventType=unknown, artistSource=unknown, artistConfidence=0, and artist fields mostly missing). Post-backfill state is read live from the DB via SELECT-only queries.",
+    "preBackfillSource": "historical pipeline records (pre-identity-backfill snapshot)",
+    "lowConfidenceThreshold": 0.55
+  }
+}

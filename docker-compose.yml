@@ -1,16 +1,53 @@
 services:
   concert-calendar:
-    build: .
-    container_name: concert-calendar
-    # Let Docker assign a random available host port to avoid conflicts
-    # The platform (Flashflock) should automatically detect the exposed port or handle routing
-    ports:
-      - "3000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      TZ: Asia/Shanghai
+      # Use a URL-safe database password (for example, 32 random hex bytes).
+      DATABASE_URL: "postgresql://concert:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/concert_calendar"
+      DATABASE_SSL: "false"
+      UPLOAD_TOKEN: "${UPLOAD_TOKEN:?Set UPLOAD_TOKEN}"
+      PROXY_URL: "${PROXY_URL:-false}"
+      BACKGROUND_SYNC_ENABLED: "${BACKGROUND_SYNC_ENABLED:-true}"
+      AI_ENABLED: "${AI_ENABLED:-false}"
+      AI_API_KEY: "${AI_API_KEY:-}"
+      AI_MODEL_PRESET: "${AI_MODEL_PRESET:-deepseek}"
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "3000"
-    # env_file:
-    #   - .env.local
-    #   - .env
     volumes:
-      - ./data:/app/data
+      - concert-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/dashboard', {signal: AbortSignal.timeout(5000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
     restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: concert_calendar
+      POSTGRES_USER: concert
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}"
+      TZ: Asia/Shanghai
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U concert -d concert_calendar"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  concert-data:
+  postgres-data:
